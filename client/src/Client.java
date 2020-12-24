@@ -1,6 +1,9 @@
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.apache.batik.anim.dom.SAXSVGDocumentFactory;
+import org.apache.batik.anim.dom.SVGGraphicsElement;
 import org.apache.batik.anim.dom.SVGOMPathElement;
 import org.apache.batik.anim.dom.SVGOMPolylineElement;
 import org.apache.batik.bridge.BridgeContext;
@@ -22,6 +25,8 @@ public class Client extends PApplet {
 	// Develop in Eclipse following https://happycoding.io/tutorials/java/processing-in-java
 	// Note: Batik uses a really old version of the W3C Document APIs: https://stackoverflow.com/questions/13676937/how-to-find-package-org-w3c-dom-svg
 	
+	private final List<SVGGraphicsElement> svgGraphics = new ArrayList<>();
+	
 	public void settings() {
 		size(1920, 1280);
 	}
@@ -31,8 +36,8 @@ public class Client extends PApplet {
 		try {
 		    String parser = XMLResourceDescriptor.getXMLParserClassName();
 		    SAXSVGDocumentFactory f = new SAXSVGDocumentFactory(parser);
-		    // doc = f.createDocument("example.svg");
-		    doc = f.createDocument("torus.svg");
+		     doc = f.createDocument("example.svg");
+		    // doc = f.createDocument("torus.svg");
 		} catch (IOException ex) {
 			ex.printStackTrace();
 			exit();
@@ -53,8 +58,21 @@ public class Client extends PApplet {
 	}
 	
 	private void traverse(Element element) {
-		float scale = 5;
+		if (element instanceof SVGGraphicsElement) {
+			svgGraphics.add((SVGGraphicsElement) element);
+			drawSvgGraphic((SVGGraphicsElement) element);
+		}
 		
+		for (int i = 0; i < element.getChildNodes().getLength(); i++) {
+			Node child = element.getChildNodes().item(i);
+			if (child instanceof Element) {
+				traverse((Element) child);
+			}
+		}
+	}
+	
+	private void drawSvgGraphic(SVGGraphicsElement element) {
+		float scale = 3;
 		if (element instanceof SVGOMPathElement) {
 			SVGOMPathElement pathElement = (SVGOMPathElement) element;
 			float length = pathElement.getTotalLength();
@@ -76,13 +94,6 @@ public class Client extends PApplet {
 				SVGPoint start = pointList.getItem(i);
 				SVGPoint end = pointList.getItem(i + 1);
 				line(start.getX() * scale, start.getY() * scale, end.getX() * scale, end.getY() * scale);
-			}
-		}
-		
-		for (int i = 0; i < element.getChildNodes().getLength(); i++) {
-			Node child = element.getChildNodes().item(i);
-			if (child instanceof Element) {
-				traverse((Element) child);
 			}
 		}
 	}
