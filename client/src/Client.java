@@ -7,6 +7,7 @@ import org.apache.batik.anim.dom.SAXSVGDocumentFactory;
 import org.apache.batik.anim.dom.SVGGraphicsElement;
 import org.apache.batik.anim.dom.SVGOMPathElement;
 import org.apache.batik.anim.dom.SVGOMPolylineElement;
+import org.apache.batik.anim.dom.SVGOMSVGElement;
 import org.apache.batik.bridge.BridgeContext;
 import org.apache.batik.bridge.DocumentLoader;
 import org.apache.batik.bridge.GVTBuilder;
@@ -21,14 +22,15 @@ import org.w3c.dom.svg.SVGPointList;
 
 import controlP5.CallbackEvent;
 import controlP5.ControlEvent;
+import controlP5.ControlFont;
 import controlP5.ControlListener;
 import controlP5.CallbackListener;
 import controlP5.ControlP5;
 import controlP5.Controller;
 import controlP5.Slider;
-
-
+import controlP5.Textfield;
 import processing.core.PApplet;
+import processing.core.PFont;
 import processing.core.PVector;
 
 
@@ -58,6 +60,8 @@ public class Client extends PApplet  {
 	
 	private ControlP5 controlP5;
 	private SmartControl<Slider> slider;
+	private SmartControl<Textfield> scaleXField;
+	private SmartControl<Textfield> scaleYField;
 	
 	public void settings() {
 		size(windowX, windowY);
@@ -83,6 +87,20 @@ public class Client extends PApplet  {
 			.setRange(0,  1)
 			.setSliderMode(Slider.FLEXIBLE)
 			.snapToTickMarks(true), this::sliderChanged);
+		
+		scaleXField = new SmartControl<>(controlP5.addTextfield("scaleX")
+				.setPosition(CANVAS_X * canvasScale + CANVAS_MARGIN * 3, 50)
+				.setSize(FONT_SIZE * 4, FONT_SIZE * 2)
+				.setFont(new ControlFont(createFont("FreeMono", FONT_SIZE), FONT_SIZE))
+				);
+		scaleXField.getControl().getCaptionLabel().set("Scale X").setSize(FONT_SIZE).setPaddingX(10);
+		
+		scaleYField = new SmartControl<>(controlP5.addTextfield("scaleY")
+				.setPosition(CANVAS_X * canvasScale + CANVAS_MARGIN * 3, 50 + scaleXField.getControl().getHeight() * (float) 2.0)
+				.setSize(FONT_SIZE * 4, FONT_SIZE * 2)
+				.setFont(new ControlFont(createFont("FreeMono", FONT_SIZE), FONT_SIZE))
+				);
+		scaleYField.getControl().getCaptionLabel().set("Scale Y").setSize(FONT_SIZE).setPaddingX(10);
 		
 		slider.getControl().getValueLabel().setSize(FONT_SIZE);
 		slider.getControl().getCaptionLabel().set("Line #").setSize(FONT_SIZE).setColor(255).setPaddingX(10);
@@ -113,9 +131,19 @@ public class Client extends PApplet  {
 		
 		svgGraphics.sort(Comparator.<SVGGraphicsElement>comparingDouble(Client::svgLength).reversed());
 		
-		
 		slider.getControl().setNumberOfTickMarks(svgGraphics.size())
 			.setRange(0, svgGraphics.size());
+		
+		float scale = 1;
+		float svgWidth = ((SVGOMSVGElement) rootElement).getWidth().getBaseVal().getValue();
+		float svgHeight = ((SVGOMSVGElement) rootElement).getWidth().getBaseVal().getValue();
+		scale = Math.min(svgWidth / CANVAS_X, svgHeight / CANVAS_Y);
+		scaleXField.getControl()
+		.setText(String.format("%.2f", scale))
+		.update();
+		scaleYField.getControl()
+		.setText(String.format("%.2f", scale))
+		.update();
 	}
 	
 	private static float svgLength(Element element) {
@@ -149,8 +177,18 @@ public class Client extends PApplet  {
 		}
 	}
 	
+	private static float parseFloatOrDefault(String text, float defaultValue) {
+		try {
+			return Float.parseFloat(text);
+		} catch (NumberFormatException e) {
+			return defaultValue;
+		}
+	}
+	
 	private void canvasLine(float x1, float y1, float x2, float y2) {
-		line(canvasStart.x + x1 * canvasScale, canvasStart.y + y1 * canvasScale, canvasStart.x +  x2 * canvasScale, canvasStart.y + y2 * canvasScale);
+		float scaleX = parseFloatOrDefault(scaleXField.getControl().getText(), 1);
+		float scaleY = parseFloatOrDefault(scaleYField.getControl().getText(), 1);
+		line(canvasStart.x + x1 * canvasScale * scaleX, canvasStart.y + y1 * canvasScale * scaleY, canvasStart.x +  x2 * canvasScale * scaleX, canvasStart.y + y2 * canvasScale * scaleY);
 	}
 	
 	private void drawSvgGraphic(SVGGraphicsElement element) {
