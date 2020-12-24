@@ -21,6 +21,7 @@ import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
 import java.awt.Font;
 import java.awt.GraphicsConfiguration;
+import javax.swing.BoxLayout;
 
 public class OptionsWindow extends JFrame implements KeyListener {
 
@@ -34,6 +35,15 @@ public class OptionsWindow extends JFrame implements KeyListener {
 	private final int processingHeight;
 	private final int leftBound;
 	private final int upperBound;
+	private JPanel panel_2;
+	private JTextField drawSpeed;
+	private JLabel lblNewLabel_2;
+	private JPanel panel_3;
+	private JTextField travelSpeed;
+	private JLabel lblNewLabel_3;
+	private JPanel panel_4;
+	private JTextField lineWidth;
+	private JLabel lblNewLabel_4;
 
 	/**
 	 * Create the frame.
@@ -46,10 +56,8 @@ public class OptionsWindow extends JFrame implements KeyListener {
 		contentPane = new JPanel();
 		contentPane.setBorder(new EmptyBorder(5, 5, 5, 5));
 		setContentPane(contentPane);
-		contentPane.setLayout(new GridLayout(2, 0, 0, 0));
 		
 		JPanel panel = new JPanel();
-		contentPane.add(panel);
 		
 		scaleX = new JTextField();
 		scaleX.setFont(new Font("Dialog", Font.PLAIN, 18));
@@ -68,7 +76,6 @@ public class OptionsWindow extends JFrame implements KeyListener {
 		lblNewLabel.setLabelFor(scaleX);
 		
 		JPanel panel_1 = new JPanel();
-		contentPane.add(panel_1);
 		
 		scaleY = new JTextField();
 		scaleY.setFont(new Font("Dialog", Font.PLAIN, 18));
@@ -86,6 +93,47 @@ public class OptionsWindow extends JFrame implements KeyListener {
 		lblNewLabel_1.setFont(new Font("Dialog", Font.BOLD, 18));
 		panel_1.add(lblNewLabel_1);
 		lblNewLabel_1.setLabelFor(scaleY);
+		
+		panel_2 = new JPanel();
+		contentPane.setLayout(new FlowLayout(FlowLayout.CENTER, 5, 5));
+		contentPane.add(panel);
+		contentPane.add(panel_1);
+		contentPane.add(panel_2);
+		
+		drawSpeed = new JTextField();
+		drawSpeed.setFont(new Font("Dialog", Font.PLAIN, 18));
+		panel_2.add(drawSpeed);
+		drawSpeed.setColumns(10);
+		
+		lblNewLabel_2 = new JLabel("Draw Speed");
+		lblNewLabel_2.setFont(new Font("Dialog", Font.BOLD, 18));
+		panel_2.add(lblNewLabel_2);
+		
+		panel_3 = new JPanel();
+		contentPane.add(panel_3);
+		
+		travelSpeed = new JTextField();
+		travelSpeed.setFont(new Font("Dialog", Font.PLAIN, 18));
+		travelSpeed.setColumns(10);
+		panel_3.add(travelSpeed);
+		
+		lblNewLabel_3 = new JLabel("Travel Speed");
+		lblNewLabel_3.setFont(new Font("Dialog", Font.BOLD, 18));
+		panel_3.add(lblNewLabel_3);
+		
+		panel_4 = new JPanel();
+		contentPane.add(panel_4);
+		
+		lineWidth = new JTextField();
+		lineWidth.setText("2");
+		lineWidth.setFont(new Font("Dialog", Font.PLAIN, 18));
+		lineWidth.setColumns(10);
+		lineWidth.addKeyListener(this);
+		panel_4.add(lineWidth);
+		
+		lblNewLabel_4 = new JLabel("Line Width");
+		lblNewLabel_4.setFont(new Font("Dialog", Font.BOLD, 18));
+		panel_4.add(lblNewLabel_4);
 		addKeyListener(this);
 		setLocationRight();
 
@@ -97,6 +145,8 @@ public class OptionsWindow extends JFrame implements KeyListener {
 	    processingHeight = bounds.height - insets.top - insets.bottom;
 	    leftBound = bounds.x + insets.left;
 	    upperBound = bounds.y + insets.top;
+	    
+	    setLineWidth();
 	}
 	
 	public void init() {
@@ -133,11 +183,19 @@ public class OptionsWindow extends JFrame implements KeyListener {
 
 	@Override
 	public void keyTyped(KeyEvent event) {
-		setScale();
+		if (event.getSource().equals(scaleX) || event.getSource().equals(scaleY)) {
+			setScale();
+		} else if (event.getSource().equals(lineWidth)) {
+			setLineWidth();
+		}
 	}
 	
 	private void setScale() {
 		canvasViewer.setScale(scaleX.getText(), scaleY.getText());
+	}
+	
+	private void setLineWidth() {
+		canvasViewer.setLineWidth(lineWidth.getText());
 	}
 	
 	private void setLocationRight() {

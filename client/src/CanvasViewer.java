@@ -62,6 +62,7 @@ public class CanvasViewer extends PApplet  {
 	private SmartControl<Slider> slider;
 	private float scaleX = 1;
 	private float scaleY = 1;
+	private float lineWidth = 1;
 	private boolean ready = false;
 	
 	public void setSize(int width, int height) {
@@ -105,8 +106,8 @@ public class CanvasViewer extends PApplet  {
 		try {
 		    String parser = XMLResourceDescriptor.getXMLParserClassName();
 		    SAXSVGDocumentFactory f = new SAXSVGDocumentFactory(parser);
-		     //doc = f.createDocument("example.svg");
-		     doc = f.createDocument("torus.svg");
+		     doc = f.createDocument("example.svg");
+		     //doc = f.createDocument("torus.svg");
 		} catch (IOException ex) {
 			ex.printStackTrace();
 			exit();
@@ -218,6 +219,7 @@ public class CanvasViewer extends PApplet  {
 		background(50, 50, 50);
 		fill(255);
 		rect(canvasStart.x, canvasStart.y, canvasStart.x + CANVAS_X * canvasScale, canvasStart.y + CANVAS_Y * canvasScale);
+		strokeWeight(lineWidth * canvasScale);
 		for (int i = 0; i < slider.getValue(); i++) {
 			drawSvgGraphic(svgGraphics.get(i));
 		}
@@ -241,6 +243,13 @@ public class CanvasViewer extends PApplet  {
 	public void setScale(String x, String y) {
 		scaleX = parseFloatOrDefault(x, 1);
 		scaleY = parseFloatOrDefault(y, 1);
+		redraw();
+	}
+	
+	public void setLineWidth(String w) {
+		lineWidth = parseFloatOrDefault(w, 1);
+		System.out.format("lineWidth: %f\n", lineWidth);
+		redraw();
 	}
 	
 	public float getScaleX() {
