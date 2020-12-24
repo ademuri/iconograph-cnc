@@ -32,7 +32,7 @@ import processing.core.PApplet;
 import processing.core.PVector;
 
 
-public class Client extends PApplet implements ControlListener {
+public class Client extends PApplet  {
 	// Develop in Eclipse following https://happycoding.io/tutorials/java/processing-in-java
 	// Note: Batik uses a really old version of the W3C Document APIs: https://stackoverflow.com/questions/13676937/how-to-find-package-org-w3c-dom-svg
 	
@@ -54,9 +54,10 @@ public class Client extends PApplet implements ControlListener {
 	
 	private final List<SVGGraphicsElement> svgGraphics = new ArrayList<>();
 	
-	ControlP5 controlP5;
-	Slider slider;
-	int sliderValue = 0;
+	private int prevSliderValue = 0;
+	
+	private ControlP5 controlP5;
+	private SmartControl<Slider> slider;
 	
 	public void settings() {
 		size(windowX, windowY);
@@ -75,18 +76,16 @@ public class Client extends PApplet implements ControlListener {
 		System.out.format("Using canvas scale factor of %.2f\n", canvasScale);
 				
 		controlP5 = new ControlP5(this);
-		slider = controlP5.addSlider("sliderValue")
+		slider = new SmartControl<>(controlP5.addSlider("lineNumber")
 			.setPosition(50, windowY - SLIDER_HEIGHT - SLIDER_MARGIN)
 			.setHeight(SLIDER_HEIGHT)
 			.setWidth((windowX * 8) / 10)
 			.setRange(0,  1)
 			.setSliderMode(Slider.FLEXIBLE)
-			.snapToTickMarks(true)
-			.addListener(this);
+			.snapToTickMarks(true), this::sliderChanged);
 		
-		Controller<Slider> sliderController = (Controller<Slider>) controlP5.getController("sliderValue");
-		sliderController.getValueLabel().setSize(FONT_SIZE);
-		sliderController.getCaptionLabel().set("Line #").setSize(FONT_SIZE).setColor(255).setPaddingX(10);
+		slider.getControl().getValueLabel().setSize(FONT_SIZE);
+		slider.getControl().getCaptionLabel().set("Line #").setSize(FONT_SIZE).setColor(255).setPaddingX(10);
 		
 		final Document doc;
 		try {
@@ -115,8 +114,8 @@ public class Client extends PApplet implements ControlListener {
 		svgGraphics.sort(Comparator.<SVGGraphicsElement>comparingDouble(Client::svgLength).reversed());
 		
 		
-		slider.setNumberOfTickMarks(svgGraphics.size());
-		slider.setRange(0, svgGraphics.size());
+		slider.getControl().setNumberOfTickMarks(svgGraphics.size())
+			.setRange(0, svgGraphics.size());
 	}
 	
 	private static float svgLength(Element element) {
@@ -185,7 +184,7 @@ public class Client extends PApplet implements ControlListener {
 		background(50, 50, 50);
 		fill(255);
 		rect(canvasStart.x, canvasStart.y, canvasStart.x + CANVAS_X * canvasScale, canvasStart.y + CANVAS_Y * canvasScale);
-		for (int i = 0; i < sliderValue; i++) {
+		for (int i = 0; i < slider.getValue(); i++) {
 			drawSvgGraphic(svgGraphics.get(i));
 		}
 	}
@@ -195,14 +194,9 @@ public class Client extends PApplet implements ControlListener {
 			exit();
 		}
 	}
-
-	// TODO: move this to its own class
-	int count = 0;
-	int prevSliderValue = 0;
-
-	@Override
-	public void controlEvent(ControlEvent arg0) {
-		sliderValue = (int) arg0.getValue();
+	
+	public void sliderChanged(ControlEvent arg0) {
+		int sliderValue = (int) arg0.getValue();
 		if (prevSliderValue != sliderValue) {
 			redraw();
 		}
