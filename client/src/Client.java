@@ -1,5 +1,6 @@
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 import org.apache.batik.anim.dom.SAXSVGDocumentFactory;
@@ -37,6 +38,19 @@ public class Client extends PApplet implements ControlListener {
 	
 	private static final int windowX = 3600;
 	private static final int windowY = 1800;
+	private static final int SLIDER_HEIGHT = 100;
+	private static final int SLIDER_MARGIN = 20;
+	private static final int PANEL_WIDTH = 200;
+	
+	private static final int CANVAS_MARGIN = 50;
+	
+	private static final int FONT_SIZE = 40;
+	
+	// Note: all physical distances are in millimeters
+	private static final float CANVAS_X = 457; // 18"
+	private static final float CANVAS_Y = 305; // 12"
+	private PVector canvasStart = new PVector(CANVAS_MARGIN, CANVAS_MARGIN);
+	private float canvasScale = 1;
 	
 	private final List<SVGGraphicsElement> svgGraphics = new ArrayList<>();
 	
@@ -49,26 +63,37 @@ public class Client extends PApplet implements ControlListener {
 	}
 	
 	public void setup() {
+		double usableX = windowX - (PANEL_WIDTH + CANVAS_MARGIN * 2);
+		double usableY = windowY - (SLIDER_HEIGHT + SLIDER_MARGIN + CANVAS_MARGIN * 2);
+		
+		// Make canvas as big as possible using whole-number scaling, or fractional scaling if canvas is bigger than the window
+		if (CANVAS_X > usableX || CANVAS_Y > usableY) {
+			canvasScale = (float) (1 / Math.max(Math.ceil(CANVAS_X / usableX) , Math.ceil(CANVAS_Y / usableY)));
+		} else {
+			canvasScale = (float) Math.min(Math.floor(usableX / CANVAS_X), Math.floor(usableY / CANVAS_Y));
+		}
+		System.out.format("Using canvas scale factor of %.2f\n", canvasScale);
+				
 		controlP5 = new ControlP5(this);
 		slider = controlP5.addSlider("sliderValue")
-			.setPosition(50, windowY - 120)
-			.setHeight(100)
+			.setPosition(50, windowY - SLIDER_HEIGHT - SLIDER_MARGIN)
+			.setHeight(SLIDER_HEIGHT)
 			.setWidth((windowX * 8) / 10)
-			.setRange(0,  100)
+			.setRange(0,  1)
 			.setSliderMode(Slider.FLEXIBLE)
 			.snapToTickMarks(true)
 			.addListener(this);
 		
 		Controller<Slider> sliderController = (Controller<Slider>) controlP5.getController("sliderValue");
-		sliderController.getValueLabel().setSize(30);
-		sliderController.getCaptionLabel().setVisible(false);
+		sliderController.getValueLabel().setSize(FONT_SIZE);
+		sliderController.getCaptionLabel().set("Line #").setSize(FONT_SIZE).setColor(255).setPaddingX(10);
 		
 		final Document doc;
 		try {
 		    String parser = XMLResourceDescriptor.getXMLParserClassName();
 		    SAXSVGDocumentFactory f = new SAXSVGDocumentFactory(parser);
-		     doc = f.createDocument("example.svg");
-		    // doc = f.createDocument("torus.svg");
+		     //doc = f.createDocument("example.svg");
+		     doc = f.createDocument("torus.svg");
 		} catch (IOException ex) {
 			ex.printStackTrace();
 			exit();
@@ -87,14 +112,34 @@ public class Client extends PApplet implements ControlListener {
 		Element rootElement = doc.getDocumentElement();
 		traverse(rootElement);
 		
+		svgGraphics.sort(Comparator.<SVGGraphicsElement>comparingDouble(Client::svgLength).reversed());
+		
+		
 		slider.setNumberOfTickMarks(svgGraphics.size());
 		slider.setRange(0, svgGraphics.size());
+	}
+	
+	private static float svgLength(Element element) {
+		if (element instanceof SVGOMPathElement) {
+			SVGOMPathElement path = (SVGOMPathElement) element;
+			return path.getTotalLength();
+		} else if (element instanceof SVGOMPolylineElement) {
+			SVGOMPolylineElement polyline = (SVGOMPolylineElement) element;
+			float length = 0;
+			for (int i = 0; i < polyline.getPoints().getNumberOfItems() - 1; i++) {
+				SVGPoint start = polyline.getPoints().getItem(i);
+				SVGPoint end = polyline.getPoints().getItem(i + 1);
+				length +=  Math.sqrt(Math.pow(end.getX() - start.getX(), 2) + Math.pow(end.getY() - start.getY(), 2));
+			}
+			return length;
+		}
+		
+		return 0;
 	}
 	
 	private void traverse(Element element) {
 		if (element instanceof SVGGraphicsElement) {
 			svgGraphics.add((SVGGraphicsElement) element);
-			//drawSvgGraphic((SVGGraphicsElement) element);
 		}
 		
 		for (int i = 0; i < element.getChildNodes().getLength(); i++) {
@@ -105,8 +150,11 @@ public class Client extends PApplet implements ControlListener {
 		}
 	}
 	
+	private void canvasLine(float x1, float y1, float x2, float y2) {
+		line(canvasStart.x + x1 * canvasScale, canvasStart.y + y1 * canvasScale, canvasStart.x +  x2 * canvasScale, canvasStart.y + y2 * canvasScale);
+	}
+	
 	private void drawSvgGraphic(SVGGraphicsElement element) {
-		float scale = 4;
 		if (element instanceof SVGOMPathElement) {
 			SVGOMPathElement pathElement = (SVGOMPathElement) element;
 			float length = pathElement.getTotalLength();
@@ -119,7 +167,7 @@ public class Client extends PApplet implements ControlListener {
 				
 				SVGPoint start = pathElement.getPointAtLength(i);
 				SVGPoint end = pathElement.getPointAtLength(endLength);
-				line(start.getX() * scale, start.getY() * scale, end.getX() * scale, end.getY() * scale);
+				canvasLine(start.getX(), start.getY(), end.getX(), end.getY());
 			}
 		} else if (element instanceof SVGOMPolylineElement) {
 			SVGOMPolylineElement polyline = (SVGOMPolylineElement) element;
@@ -127,14 +175,16 @@ public class Client extends PApplet implements ControlListener {
 			for (int i = 0; i < pointList.getNumberOfItems() - 1; i++) {
 				SVGPoint start = pointList.getItem(i);
 				SVGPoint end = pointList.getItem(i + 1);
-				line(start.getX() * scale, start.getY() * scale, end.getX() * scale, end.getY() * scale);
+				canvasLine(start.getX(), start.getY(), end.getX(), end.getY());
 			}
 		}
 	}
 	
 	public void draw() {
 		clear();
-		background(255, 255, 255);
+		background(50, 50, 50);
+		fill(255);
+		rect(canvasStart.x, canvasStart.y, canvasStart.x + CANVAS_X * canvasScale, canvasStart.y + CANVAS_Y * canvasScale);
 		for (int i = 0; i < sliderValue; i++) {
 			drawSvgGraphic(svgGraphics.get(i));
 		}
@@ -154,7 +204,6 @@ public class Client extends PApplet implements ControlListener {
 	public void controlEvent(ControlEvent arg0) {
 		sliderValue = (int) arg0.getValue();
 		if (prevSliderValue != sliderValue) {
-			System.out.println(count++);
 			redraw();
 		}
 		
