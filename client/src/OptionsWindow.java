@@ -13,10 +13,14 @@ import javax.swing.JLabel;
 import java.awt.GridBagLayout;
 import java.awt.GridBagConstraints;
 import java.awt.GridLayout;
+import java.awt.Insets;
+import java.awt.Rectangle;
+import java.awt.Toolkit;
 import java.awt.FlowLayout;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
 import java.awt.Font;
+import java.awt.GraphicsConfiguration;
 
 public class OptionsWindow extends JFrame implements KeyListener {
 
@@ -53,7 +57,6 @@ public class OptionsWindow extends JFrame implements KeyListener {
 		scaleX.setToolTipText("");
 		scaleX.setColumns(10);
 		scaleX.addKeyListener(this);
-		scaleX.setText(String.format("%.2f", canvasViewer.getScaleX()));
 		lblNewLabel.setFont(new Font("Dialog", Font.BOLD, 18));
 		panel.add(lblNewLabel);
 		lblNewLabel.setLabelFor(scaleX);
@@ -70,7 +73,6 @@ public class OptionsWindow extends JFrame implements KeyListener {
 				setScale();
 			}
 		});
-		scaleY.setText(String.format("%.2f", canvasViewer.getScaleY()));
 		panel_1.add(scaleY);
 		scaleY.setColumns(10);
 		
@@ -79,7 +81,12 @@ public class OptionsWindow extends JFrame implements KeyListener {
 		panel_1.add(lblNewLabel_1);
 		lblNewLabel_1.setLabelFor(scaleY);
 		addKeyListener(this);
-		setVisible(true);
+		setLocationRight();
+	}
+	
+	public void init() {
+		scaleX.setText(String.format("%.2f", canvasViewer.getScaleX()));
+		scaleY.setText(String.format("%.2f", canvasViewer.getScaleY()));
 	}
 
 	@Override
@@ -100,5 +107,14 @@ public class OptionsWindow extends JFrame implements KeyListener {
 	
 	private void setScale() {
 		canvasViewer.setScale(scaleX.getText(), scaleY.getText());
+	}
+	
+	private void setLocationRight() {
+		GraphicsConfiguration config = getGraphicsConfiguration();
+	    Rectangle bounds = config.getBounds();
+	    Insets insets = Toolkit.getDefaultToolkit().getScreenInsets(config);
+	    int x = bounds.x + bounds.width - insets.right - getWidth();
+	    int y = bounds.y + insets.top;
+	    setLocation(x, y);
 	}
 }
