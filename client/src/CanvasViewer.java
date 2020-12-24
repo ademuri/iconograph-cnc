@@ -60,8 +60,8 @@ public class CanvasViewer extends PApplet  {
 	
 	private ControlP5 controlP5;
 	private SmartControl<Slider> slider;
-	private SmartControl<Textfield> scaleXField;
-	private SmartControl<Textfield> scaleYField;
+	private float scaleX = 1;
+	private float scaleY = 1;
 	
 	public void settings() {
 		size(windowX, windowY);
@@ -87,20 +87,6 @@ public class CanvasViewer extends PApplet  {
 			.setRange(0,  1)
 			.setSliderMode(Slider.FLEXIBLE)
 			.snapToTickMarks(true), this::sliderChanged);
-		
-		scaleXField = new SmartControl<>(controlP5.addTextfield("scaleX")
-				.setPosition(CANVAS_X * canvasScale + CANVAS_MARGIN * 3, 50)
-				.setSize(FONT_SIZE * 4, FONT_SIZE * 2)
-				.setFont(new ControlFont(createFont("FreeMono", FONT_SIZE), FONT_SIZE))
-				);
-		scaleXField.getControl().getCaptionLabel().set("Scale X").setSize(FONT_SIZE).setPaddingX(10);
-		
-		scaleYField = new SmartControl<>(controlP5.addTextfield("scaleY")
-				.setPosition(CANVAS_X * canvasScale + CANVAS_MARGIN * 3, 50 + scaleXField.getControl().getHeight() * (float) 2.0)
-				.setSize(FONT_SIZE * 4, FONT_SIZE * 2)
-				.setFont(new ControlFont(createFont("FreeMono", FONT_SIZE), FONT_SIZE))
-				);
-		scaleYField.getControl().getCaptionLabel().set("Scale Y").setSize(FONT_SIZE).setPaddingX(10);
 		
 		slider.getControl().getValueLabel().setSize(FONT_SIZE);
 		slider.getControl().getCaptionLabel().set("Line #").setSize(FONT_SIZE).setColor(255).setPaddingX(10);
@@ -138,12 +124,8 @@ public class CanvasViewer extends PApplet  {
 		float svgWidth = ((SVGOMSVGElement) rootElement).getWidth().getBaseVal().getValue();
 		float svgHeight = ((SVGOMSVGElement) rootElement).getWidth().getBaseVal().getValue();
 		scale = Math.min(svgWidth / CANVAS_X, svgHeight / CANVAS_Y);
-		scaleXField.getControl()
-		.setText(String.format("%.2f", scale))
-		.update();
-		scaleYField.getControl()
-		.setText(String.format("%.2f", scale))
-		.update();
+		scaleX = scale;
+		scaleY = scale;
 	}
 	
 	private static float svgLength(Element element) {
@@ -186,8 +168,6 @@ public class CanvasViewer extends PApplet  {
 	}
 	
 	private void canvasLine(float x1, float y1, float x2, float y2) {
-		float scaleX = parseFloatOrDefault(scaleXField.getControl().getText(), 1);
-		float scaleY = parseFloatOrDefault(scaleYField.getControl().getText(), 1);
 		line(canvasStart.x + x1 * canvasScale * scaleX, canvasStart.y + y1 * canvasScale * scaleY, canvasStart.x +  x2 * canvasScale * scaleX, canvasStart.y + y2 * canvasScale * scaleY);
 	}
 	
@@ -240,5 +220,19 @@ public class CanvasViewer extends PApplet  {
 		}
 		
 		prevSliderValue = sliderValue;
+	}
+	
+	public void setScale(String x, String y) {
+		scaleX = parseFloatOrDefault(x, 1);
+		scaleY = parseFloatOrDefault(y, 1);
+		System.out.format("%f, %f\n", scaleX, scaleY);
+	}
+	
+	public float getScaleX() {
+		return scaleX;
+	}
+	
+	public float getScaleY() {
+		return scaleY;
 	}
 }
