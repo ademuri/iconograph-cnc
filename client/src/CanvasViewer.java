@@ -1,4 +1,7 @@
+import java.io.BufferedWriter;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -49,8 +52,16 @@ public class CanvasViewer extends PApplet  {
 	private static final int FONT_SIZE = 40;
 	
 	// Note: all physical distances are in millimeters
-	private static final float CANVAS_X = 457; // 18"
-	private static final float CANVAS_Y = 305; // 12"
+	private static final double MM_PER_INCH = 25.4;
+	private static final double canvasWidth = 18 * MM_PER_INCH;
+	private static final double canvasHeight = 12 * MM_PER_INCH;
+	private static final double machineWidth = 42 * MM_PER_INCH;
+	private static final double machineHeight = 21 * MM_PER_INCH;
+	private static final double canvasLeftX = (machineWidth - canvasWidth) / 2;
+	private static final double canvasRightX = canvasLeftX + canvasWidth;
+	private static final double canvasTopY = machineHeight - canvasHeight;
+	private static final double canvasBottomY = machineHeight;
+	
 	private PVector canvasStart = new PVector(CANVAS_MARGIN, CANVAS_MARGIN);
 	private float canvasScale = 1;
 	
@@ -60,9 +71,9 @@ public class CanvasViewer extends PApplet  {
 	
 	private ControlP5 controlP5;
 	private SmartControl<Slider> slider;
-	private float scaleX = 1;
-	private float scaleY = 1;
-	private float lineWidth = 1;
+	private double scaleX = 1;
+	private double scaleY = 1;
+	private double lineWidth = 1;
 	private boolean ready = false;
 	
 	public void setSize(int width, int height) {
@@ -83,10 +94,10 @@ public class CanvasViewer extends PApplet  {
 		double usableY = windowY - (SLIDER_HEIGHT + SLIDER_MARGIN + CANVAS_MARGIN * 2);
 		
 		// Make canvas as big as possible using whole-number scaling, or fractional scaling if canvas is bigger than the window
-		if (CANVAS_X > usableX || CANVAS_Y > usableY) {
-			canvasScale = (float) (1 / Math.max(Math.ceil(CANVAS_X / usableX) , Math.ceil(CANVAS_Y / usableY)));
+		if (canvasWidth > usableX || canvasHeight > usableY) {
+			canvasScale = (float) (1 / Math.max(Math.ceil(canvasWidth / usableX) , Math.ceil(canvasHeight / usableY)));
 		} else {
-			canvasScale = (float) Math.min(Math.floor(usableX / CANVAS_X), Math.floor(usableY / CANVAS_Y));
+			canvasScale = (float) Math.min(Math.floor(usableX / canvasWidth), Math.floor(usableY / canvasHeight));
 		}
 		System.out.format("Using canvas scale factor of %.2f\n", canvasScale);
 				
@@ -132,10 +143,10 @@ public class CanvasViewer extends PApplet  {
 			.setRange(0, svgGraphics.size())
 			.setValue(svgGraphics.size());
 		
-		float scale = 1;
-		float svgWidth = ((SVGOMSVGElement) rootElement).getWidth().getBaseVal().getValue();
-		float svgHeight = ((SVGOMSVGElement) rootElement).getWidth().getBaseVal().getValue();
-		scale = Math.min(svgWidth / CANVAS_X, svgHeight / CANVAS_Y);
+		double scale = 1;
+		double svgWidth = ((SVGOMSVGElement) rootElement).getWidth().getBaseVal().getValue();
+		double svgHeight = ((SVGOMSVGElement) rootElement).getWidth().getBaseVal().getValue();
+		scale = Math.min(svgWidth / canvasWidth, svgHeight / canvasHeight);
 		scaleX = scale;
 		scaleY = scale;
 		ready = true;
@@ -188,11 +199,15 @@ public class CanvasViewer extends PApplet  {
 		line(canvasStart.x + x1 * canvasScale * scaleX, canvasStart.y + y1 * canvasScale * scaleY, canvasStart.x +  x2 * canvasScale * scaleX, canvasStart.y + y2 * canvasScale * scaleY);
 	}
 	
+	private void line(double d, double e, double f, double g) {
+		line((float) d, (float) e, (float) f, (float) g);
+	}
+
 	private void drawSvgGraphic(SVGGraphicsElement element) {
 		if (element instanceof SVGOMPathElement) {
 			SVGOMPathElement pathElement = (SVGOMPathElement) element;
 			float length = pathElement.getTotalLength();
-			float step = length / 10;
+			float step = length / 20;
 			for (float i = 0; i < length; i += step) {
 				float endLength = i + step;
 				if (endLength > length) {
@@ -218,8 +233,8 @@ public class CanvasViewer extends PApplet  {
 		clear();
 		background(50, 50, 50);
 		fill(255);
-		rect(canvasStart.x, canvasStart.y, canvasStart.x + CANVAS_X * canvasScale, canvasStart.y + CANVAS_Y * canvasScale);
-		strokeWeight(lineWidth * canvasScale);
+		rect(canvasStart.x, canvasStart.y, (float)(canvasStart.x + canvasWidth * canvasScale), (float)(canvasStart.y + canvasHeight * canvasScale));
+		strokeWeight((float)(lineWidth * canvasScale));
 		for (int i = 0; i < slider.getValue(); i++) {
 			drawSvgGraphic(svgGraphics.get(i));
 		}
@@ -252,11 +267,55 @@ public class CanvasViewer extends PApplet  {
 		redraw();
 	}
 	
-	public float getScaleX() {
+	public double getScaleX() {
 		return scaleX;
 	}
 	
-	public float getScaleY() {
+	public double getScaleY() {
 		return scaleY;
+	}
+		
+	private String pathToGcode(SVGOMPathElement path) {
+		List<String> codes = new ArrayList<>();
+		
+		float length = path.getTotalLength();
+		float step = length / 10;
+		for (float i = 0; i <= length; i += step) {
+			SVGPoint point = path.getPointAtLength(i);
+			double x = point.getX() * scaleX;
+			double y = point.getY() * scaleY;
+			
+			if (x > canvasWidth || x < 0 || y > canvasHeight || y < 0) {
+				System.err.format("Warning: truncating line outside of canvas, offending point: (%f, %f)\n", x, y);
+				break;
+			}
+			
+			double nextL = Math.sqrt(sq(point.getX()) + sq(point.getY()));
+			double nextR = Math.sqrt(Math.pow(machineWidth - point.getX(), 2) + sq(point.getY()));
+			codes.add(String.format("G01 F%d X%f Y%f", 100, nextL, nextR));
+		}
+		return String.join("\n", codes) + "\n";
+	}
+	
+	private String polylineToGcode(SVGOMPolylineElement polyline) {
+		return "";
+	}
+	
+	public void generateGcode() {
+		try {
+			BufferedWriter writer = Files.newBufferedWriter(Path.of("out.gcode"));
+			writer.append("G90 ; Absolute positioning\n\n");
+			for (SVGGraphicsElement graphic : svgGraphics) {
+				if (graphic instanceof SVGOMPathElement) {
+					writer.append(pathToGcode((SVGOMPathElement) graphic));
+				} else if (graphic instanceof SVGOMPolylineElement) {
+					writer.append(polylineToGcode((SVGOMPolylineElement) graphic));
+				}
+			}
+			writer.close();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 }

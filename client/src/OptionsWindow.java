@@ -17,11 +17,14 @@ import java.awt.Insets;
 import java.awt.Rectangle;
 import java.awt.Toolkit;
 import java.awt.FlowLayout;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
 import java.awt.Font;
 import java.awt.GraphicsConfiguration;
 import javax.swing.BoxLayout;
+import javax.swing.JButton;
 
 public class OptionsWindow extends JFrame implements KeyListener {
 
@@ -44,6 +47,8 @@ public class OptionsWindow extends JFrame implements KeyListener {
 	private JPanel panel_4;
 	private JTextField lineWidth;
 	private JLabel lblNewLabel_4;
+	private JPanel panel_5;
+	private JButton generateGcode;
 
 	/**
 	 * Create the frame.
@@ -134,6 +139,18 @@ public class OptionsWindow extends JFrame implements KeyListener {
 		lblNewLabel_4 = new JLabel("Line Width");
 		lblNewLabel_4.setFont(new Font("Dialog", Font.BOLD, 18));
 		panel_4.add(lblNewLabel_4);
+		
+		panel_5 = new JPanel();
+		contentPane.add(panel_5);
+		
+		generateGcode = new JButton("Generate G-Code");
+		generateGcode.addActionListener(new ActionListener() {	
+			@Override
+			public void actionPerformed(ActionEvent arg0) {
+				doGenerateGcode();
+			}
+		});
+		panel_5.add(generateGcode);
 		addKeyListener(this);
 		setLocationRight();
 
@@ -196,6 +213,10 @@ public class OptionsWindow extends JFrame implements KeyListener {
 	
 	private void setLineWidth() {
 		canvasViewer.setLineWidth(lineWidth.getText());
+	}
+	
+	private void doGenerateGcode() {
+		canvasViewer.generateGcode();
 	}
 	
 	private void setLocationRight() {
