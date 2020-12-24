@@ -20,6 +20,7 @@ import org.apache.batik.util.XMLResourceDescriptor;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
+import org.w3c.dom.svg.SVGLength;
 import org.w3c.dom.svg.SVGPoint;
 import org.w3c.dom.svg.SVGPointList;
 
@@ -117,8 +118,9 @@ public class CanvasViewer extends PApplet  {
 		try {
 		    String parser = XMLResourceDescriptor.getXMLParserClassName();
 		    SAXSVGDocumentFactory f = new SAXSVGDocumentFactory(parser);
-		     doc = f.createDocument("example.svg");
+		     //doc = f.createDocument("example.svg");
 		     //doc = f.createDocument("torus.svg");
+		    doc = f.createDocument("squares.svg");
 		} catch (IOException ex) {
 			ex.printStackTrace();
 			exit();
@@ -143,10 +145,19 @@ public class CanvasViewer extends PApplet  {
 			.setRange(0, svgGraphics.size())
 			.setValue(svgGraphics.size());
 		
+		SVGLength width = ((SVGOMSVGElement) rootElement).getWidth().getBaseVal();
+		width.convertToSpecifiedUnits(SVGLength.SVG_LENGTHTYPE_MM);
+		SVGLength height = ((SVGOMSVGElement) rootElement).getHeight().getBaseVal();
+		height.convertToSpecifiedUnits(SVGLength.SVG_LENGTHTYPE_MM);
 		double scale = 1;
-		double svgWidth = ((SVGOMSVGElement) rootElement).getWidth().getBaseVal().getValue();
-		double svgHeight = ((SVGOMSVGElement) rootElement).getWidth().getBaseVal().getValue();
-		scale = Math.min(svgWidth / canvasWidth, svgHeight / canvasHeight);
+		double svgWidth = width.getValueInSpecifiedUnits();
+		double svgHeight = height.getValueInSpecifiedUnits();
+		System.out.format("(%f, %f) (%f, %f)\n", svgWidth, svgHeight, canvasWidth, canvasHeight);
+		if (canvasWidth > svgWidth) {
+			scale = Math.min(canvasWidth / svgWidth, canvasHeight / svgHeight);
+		} else {
+			scale = 1 / Math.min(svgWidth / canvasWidth, svgHeight / canvasHeight);
+		}
 		scaleX = scale;
 		scaleY = scale;
 		ready = true;
@@ -274,9 +285,18 @@ public class CanvasViewer extends PApplet  {
 	public double getScaleY() {
 		return scaleY;
 	}
+	
+	private String penDownGcode() {
+		return String.format("G01 F%d, Z%f\n ; Pen down", 100, 300);
+	}
+	
+	private String penUpGcode() {
+		return String.format("G01 F%d, Z%f\n ; Pen up", 100, -300);
+	}
 		
 	private String pathToGcode(SVGOMPathElement path) {
 		List<String> codes = new ArrayList<>();
+		codes.add(penDownGcode());
 		
 		float length = path.getTotalLength();
 		float step = length / 10;
@@ -294,7 +314,8 @@ public class CanvasViewer extends PApplet  {
 			double nextR = Math.sqrt(Math.pow(machineWidth - point.getX(), 2) + sq(point.getY()));
 			codes.add(String.format("G01 F%d X%f Y%f", 100, nextL, nextR));
 		}
-		return String.join("\n", codes) + "\n";
+		codes.add(penUpGcode());
+		return String.join("\n", codes) + "\n\n";
 	}
 	
 	private String polylineToGcode(SVGOMPolylineElement polyline) {
@@ -314,7 +335,6 @@ public class CanvasViewer extends PApplet  {
 			}
 			writer.close();
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}
