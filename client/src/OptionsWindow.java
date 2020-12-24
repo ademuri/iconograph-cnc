@@ -29,12 +29,18 @@ public class OptionsWindow extends JFrame implements KeyListener {
 	private JTextField scaleX;
 	private final JLabel lblNewLabel = new JLabel("Scale X");
 	private JTextField scaleY;
+	
+	private final int processingWidth;
+	private final int processingHeight;
+	private final int leftBound;
+	private final int upperBound;
 
 	/**
 	 * Create the frame.
 	 */
 	public OptionsWindow(CanvasViewer canvasViewer) {
 		this.canvasViewer = canvasViewer;
+		
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		setBounds(100, 100, 450, 300);
 		contentPane = new JPanel();
@@ -82,11 +88,36 @@ public class OptionsWindow extends JFrame implements KeyListener {
 		lblNewLabel_1.setLabelFor(scaleY);
 		addKeyListener(this);
 		setLocationRight();
+
+		GraphicsConfiguration config = getGraphicsConfiguration();
+	    Rectangle bounds = config.getBounds();
+	    Insets insets = Toolkit.getDefaultToolkit().getScreenInsets(config);
+	    System.out.format("width: %d\n", getWidth());
+	    processingWidth = bounds.width - insets.right - insets.left - getWidth();
+	    processingHeight = bounds.height - insets.top - insets.bottom;
+	    leftBound = bounds.x + insets.left;
+	    upperBound = bounds.y + insets.top;
 	}
 	
 	public void init() {
 		scaleX.setText(String.format("%.2f", canvasViewer.getScaleX()));
 		scaleY.setText(String.format("%.2f", canvasViewer.getScaleY()));
+	}
+	
+	public int getProcessingWidth() {
+		return processingWidth;
+	}
+	
+	public int getProcessingHeight() {
+		return processingHeight;
+	}
+	
+	public int getLeftBound() {
+		return leftBound;
+	}
+	
+	public int getUpperBound() {
+		return upperBound;
 	}
 
 	@Override

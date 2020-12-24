@@ -38,8 +38,8 @@ public class CanvasViewer extends PApplet  {
 	// Develop in Eclipse following https://happycoding.io/tutorials/java/processing-in-java
 	// Note: Batik uses a really old version of the W3C Document APIs: https://stackoverflow.com/questions/13676937/how-to-find-package-org-w3c-dom-svg
 	
-	private static final int windowX = 1400;
-	private static final int windowY = 1000;
+	private int windowX;
+	private int windowY;
 	private static final int SLIDER_HEIGHT = 100;
 	private static final int SLIDER_MARGIN = 20;
 	private static final int PANEL_WIDTH = 200;
@@ -63,6 +63,15 @@ public class CanvasViewer extends PApplet  {
 	private float scaleX = 1;
 	private float scaleY = 1;
 	private boolean ready = false;
+	
+	public void setSize(int width, int height) {
+		windowX = width;
+		windowY = height;
+	}
+	
+	public void setLocation(int x, int y) {
+		surface.setLocation(x, y);
+	}
 	
 	public void settings() {
 		size(windowX, windowY);
@@ -118,7 +127,7 @@ public class CanvasViewer extends PApplet  {
 		
 		svgGraphics.sort(Comparator.<SVGGraphicsElement>comparingDouble(CanvasViewer::svgLength).reversed());
 		
-		slider.getControl().setNumberOfTickMarks(svgGraphics.size())
+		slider.getControl().setNumberOfTickMarks(svgGraphics.size() + 1)
 			.setRange(0, svgGraphics.size())
 			.setValue(svgGraphics.size());
 		
@@ -128,7 +137,6 @@ public class CanvasViewer extends PApplet  {
 		scale = Math.min(svgWidth / CANVAS_X, svgHeight / CANVAS_Y);
 		scaleX = scale;
 		scaleY = scale;
-		surface.setLocation(0, 0);
 		ready = true;
 	}
 	
