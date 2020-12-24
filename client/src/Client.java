@@ -2,6 +2,7 @@ import java.io.IOException;
 
 import org.apache.batik.anim.dom.SAXSVGDocumentFactory;
 import org.apache.batik.anim.dom.SVGOMPathElement;
+import org.apache.batik.anim.dom.SVGOMPolylineElement;
 import org.apache.batik.bridge.BridgeContext;
 import org.apache.batik.bridge.DocumentLoader;
 import org.apache.batik.bridge.GVTBuilder;
@@ -12,6 +13,7 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.svg.SVGPoint;
+import org.w3c.dom.svg.SVGPointList;
 
 import processing.core.PApplet;
 
@@ -29,7 +31,8 @@ public class Client extends PApplet {
 		try {
 		    String parser = XMLResourceDescriptor.getXMLParserClassName();
 		    SAXSVGDocumentFactory f = new SAXSVGDocumentFactory(parser);
-		    doc = f.createDocument("example.svg");
+		    // doc = f.createDocument("example.svg");
+		    doc = f.createDocument("torus.svg");
 		} catch (IOException ex) {
 			ex.printStackTrace();
 			exit();
@@ -50,11 +53,12 @@ public class Client extends PApplet {
 	}
 	
 	private void traverse(Element element) {
+		float scale = 5;
+		
 		if (element instanceof SVGOMPathElement) {
 			SVGOMPathElement pathElement = (SVGOMPathElement) element;
 			float length = pathElement.getTotalLength();
 			float step = length / 10;
-			float scale = 3;
 			for (float i = 0; i < length; i += step) {
 				float endLength = i + step;
 				if (endLength > length) {
@@ -63,6 +67,14 @@ public class Client extends PApplet {
 				
 				SVGPoint start = pathElement.getPointAtLength(i);
 				SVGPoint end = pathElement.getPointAtLength(endLength);
+				line(start.getX() * scale, start.getY() * scale, end.getX() * scale, end.getY() * scale);
+			}
+		} else if (element instanceof SVGOMPolylineElement) {
+			SVGOMPolylineElement polyline = (SVGOMPolylineElement) element;
+			SVGPointList pointList = polyline.getPoints();
+			for (int i = 0; i < pointList.getNumberOfItems() - 1; i++) {
+				SVGPoint start = pointList.getItem(i);
+				SVGPoint end = pointList.getItem(i + 1);
 				line(start.getX() * scale, start.getY() * scale, end.getX() * scale, end.getY() * scale);
 			}
 		}
