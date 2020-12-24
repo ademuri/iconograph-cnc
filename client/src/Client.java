@@ -18,20 +18,51 @@ import org.w3c.dom.Node;
 import org.w3c.dom.svg.SVGPoint;
 import org.w3c.dom.svg.SVGPointList;
 
+import controlP5.CallbackEvent;
+import controlP5.ControlEvent;
+import controlP5.ControlListener;
+import controlP5.CallbackListener;
+import controlP5.ControlP5;
+import controlP5.Controller;
+import controlP5.Slider;
+
+
 import processing.core.PApplet;
+import processing.core.PVector;
 
 
-public class Client extends PApplet {
+public class Client extends PApplet implements ControlListener {
 	// Develop in Eclipse following https://happycoding.io/tutorials/java/processing-in-java
 	// Note: Batik uses a really old version of the W3C Document APIs: https://stackoverflow.com/questions/13676937/how-to-find-package-org-w3c-dom-svg
 	
+	private static final int windowX = 3600;
+	private static final int windowY = 1800;
+	
 	private final List<SVGGraphicsElement> svgGraphics = new ArrayList<>();
 	
+	ControlP5 controlP5;
+	Slider slider;
+	int sliderValue = 0;
+	
 	public void settings() {
-		size(1920, 1280);
+		size(windowX, windowY);
 	}
 	
 	public void setup() {
+		controlP5 = new ControlP5(this);
+		slider = controlP5.addSlider("sliderValue")
+			.setPosition(50, windowY - 120)
+			.setHeight(100)
+			.setWidth((windowX * 8) / 10)
+			.setRange(0,  100)
+			.setSliderMode(Slider.FLEXIBLE)
+			.snapToTickMarks(true)
+			.addListener(this);
+		
+		Controller<Slider> sliderController = (Controller<Slider>) controlP5.getController("sliderValue");
+		sliderController.getValueLabel().setSize(30);
+		sliderController.getCaptionLabel().setVisible(false);
+		
 		final Document doc;
 		try {
 		    String parser = XMLResourceDescriptor.getXMLParserClassName();
@@ -55,12 +86,15 @@ public class Client extends PApplet {
 		
 		Element rootElement = doc.getDocumentElement();
 		traverse(rootElement);
+		
+		slider.setNumberOfTickMarks(svgGraphics.size());
+		slider.setRange(0, svgGraphics.size());
 	}
 	
 	private void traverse(Element element) {
 		if (element instanceof SVGGraphicsElement) {
 			svgGraphics.add((SVGGraphicsElement) element);
-			drawSvgGraphic((SVGGraphicsElement) element);
+			//drawSvgGraphic((SVGGraphicsElement) element);
 		}
 		
 		for (int i = 0; i < element.getChildNodes().getLength(); i++) {
@@ -72,7 +106,7 @@ public class Client extends PApplet {
 	}
 	
 	private void drawSvgGraphic(SVGGraphicsElement element) {
-		float scale = 3;
+		float scale = 4;
 		if (element instanceof SVGOMPathElement) {
 			SVGOMPathElement pathElement = (SVGOMPathElement) element;
 			float length = pathElement.getTotalLength();
@@ -99,7 +133,11 @@ public class Client extends PApplet {
 	}
 	
 	public void draw() {
-		
+		clear();
+		background(255, 255, 255);
+		for (int i = 0; i < sliderValue; i++) {
+			drawSvgGraphic(svgGraphics.get(i));
+		}
 	}
 	
 	public void keyPressed() {
@@ -108,6 +146,20 @@ public class Client extends PApplet {
 		}
 	}
 
+	// TODO: move this to its own class
+	int count = 0;
+	int prevSliderValue = 0;
+
+	@Override
+	public void controlEvent(ControlEvent arg0) {
+		sliderValue = (int) arg0.getValue();
+		if (prevSliderValue != sliderValue) {
+			System.out.println(count++);
+			redraw();
+		}
+		
+		prevSliderValue = sliderValue;
+	}
 
 	public static void main(String[] args) {
 		String[] processingArgs = {"Iconograph CNC Client"};
