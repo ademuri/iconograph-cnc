@@ -287,55 +287,95 @@ public class CanvasViewer extends PApplet  {
 	}
 	
 	private String penDownGcode() {
-		return String.format("G01 F%d, Z%f\n ; Pen down", 100, 300);
+		return String.format("G01 F%f Z%f ; Pen down\n", 500.0, 3.0);
 	}
 	
 	private String penUpGcode() {
-		return String.format("G01 F%d, Z%f\n ; Pen up", 100, -300);
+		return String.format("G01 F%f Z%f ; Pen up\n", 500.0, -3.0);
 	}
 		
-	private String pathToGcode(SVGOMPathElement path) {
-		List<String> codes = new ArrayList<>();
-		codes.add(penDownGcode());
-		
+	private List<Point> pathToPoints(SVGOMPathElement path) {
+		List<Point> points = new ArrayList<>();
 		float length = path.getTotalLength();
 		float step = length / 10;
 		for (float i = 0; i <= length; i += step) {
 			SVGPoint point = path.getPointAtLength(i);
 			double x = point.getX() * scaleX;
 			double y = point.getY() * scaleY;
-			
-			if (x > canvasWidth || x < 0 || y > canvasHeight || y < 0) {
-				System.err.format("Warning: truncating line outside of canvas, offending point: (%f, %f)\n", x, y);
-				break;
-			}
-			
-			double nextL = Math.sqrt(sq(point.getX()) + sq(point.getY()));
-			double nextR = Math.sqrt(Math.pow(machineWidth - point.getX(), 2) + sq(point.getY()));
-			codes.add(String.format("G01 F%d X%f Y%f", 100, nextL, nextR));
+			points.add(new Point(x, y));
 		}
-		codes.add(penUpGcode());
-		return String.join("\n", codes) + "\n\n";
+		return points;
 	}
 	
-	private String polylineToGcode(SVGOMPolylineElement polyline) {
-		return "";
+	private List<Point> polylineToPoints(SVGOMPolylineElement polyline) {
+		List<Point> points = new ArrayList<>();
+		SVGPointList pointList = polyline.getPoints();
+		for (int i = 0; i < pointList.getNumberOfItems(); i++) {
+			SVGPoint point = pointList.getItem(i);
+			points.add(new Point(point.getX() * scaleX, point.getY() * scaleY));
+		}
+		return points;
 	}
 	
 	public void generateGcode() {
+		// First, process all SVG elements into Points. Group each SVG primitives like polylines and paths into their own lists of points - each inner list should be connected.
+		List<List<Point>> pointLists = new ArrayList<>();
+		for (SVGGraphicsElement graphic : svgGraphics) {
+			if (graphic instanceof SVGOMPathElement) {
+				pointLists.add(pathToPoints((SVGOMPathElement) graphic));
+			} else if (graphic instanceof SVGOMPolylineElement) {
+				pointLists.add(polylineToPoints((SVGOMPolylineElement) graphic));
+			}
+		}
+		
 		try {
+			Point home = new Point(533, 300);
+			Point offset = new Point(571, 571);
 			BufferedWriter writer = Files.newBufferedWriter(Path.of("out.gcode"));
 			writer.append("G90 ; Absolute positioning\n\n");
-			for (SVGGraphicsElement graphic : svgGraphics) {
-				if (graphic instanceof SVGOMPathElement) {
-					writer.append(pathToGcode((SVGOMPathElement) graphic));
-				} else if (graphic instanceof SVGOMPolylineElement) {
-					writer.append(polylineToGcode((SVGOMPolylineElement) graphic));
+			
+			boolean penDown = false;
+			for (int i = 0; i < pointLists.size(); i++) {
+				List<Point> points = pointLists.get(i);
+				if (!penDown) {
+					writer.append(penDownGcode());
+					penDown = true;
+				}
+				for (int j = 0; j < points.size(); j++) {
+					Point adjustedPoint = new Point(points.get(j).x + home.x, points.get(j).y + home.y);
+					double nextL = Math.sqrt(Math.pow(adjustedPoint.x, 2) + Math.pow(adjustedPoint.y, 2)) - offset.x;
+					double nextR = Math.sqrt(Math.pow(machineWidth - adjustedPoint.x, 2) + Math.pow(adjustedPoint.y, 2)) - offset.y;
+					writer.append(String.format("G01 F%f X%f Y%f\n", 2000.0, nextL, nextR));
+				}
+				if (i < pointLists.size() - 1) {
+					Point lastPoint = points.get(points.size() - 1);
+					Point nextPoint = pointLists.get(i + 1).get(0);
+					
+					if (Math.abs(nextPoint.x - lastPoint.x) < .01 && Math.abs(nextPoint.y - lastPoint.y) < .01) {
+						// Keep pen down
+						penDown = true;
+					} else {
+						writer.append(penUpGcode());
+						penDown = false;
+					}
+				} else {
+					writer.append(penUpGcode());
+					penDown = false;
 				}
 			}
 			writer.close();
 		} catch (IOException e) {
 			e.printStackTrace();
+		}
+	}
+	
+	private static class Point {
+		final double x;
+		final double y;
+		
+		public Point(double x, double y) {
+			this.x = x;
+			this.y = y;
 		}
 	}
 }
