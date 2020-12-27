@@ -54,7 +54,8 @@ public class CanvasViewer extends PApplet  {
 	
 	// Note: all physical distances are in millimeters
 	private static final double MM_PER_INCH = 25.4;
-	private static final double canvasWidth = 18 * MM_PER_INCH;
+	//private static final double canvasWidth = 18 * MM_PER_INCH;
+	private static final double canvasWidth = 12 * MM_PER_INCH;
 	private static final double canvasHeight = 12 * MM_PER_INCH;
 	private static final double machineWidth = 42 * MM_PER_INCH;
 	private static final double machineHeight = 21 * MM_PER_INCH;
@@ -152,7 +153,6 @@ public class CanvasViewer extends PApplet  {
 		double scale = 1;
 		double svgWidth = width.getValueInSpecifiedUnits();
 		double svgHeight = height.getValueInSpecifiedUnits();
-		System.out.format("(%f, %f) (%f, %f)\n", svgWidth, svgHeight, canvasWidth, canvasHeight);
 		if (canvasWidth > svgWidth) {
 			scale = Math.min(canvasWidth / svgWidth, canvasHeight / svgHeight);
 		} else {
@@ -274,7 +274,6 @@ public class CanvasViewer extends PApplet  {
 	
 	public void setLineWidth(String w) {
 		lineWidth = parseFloatOrDefault(w, 1);
-		System.out.format("lineWidth: %f\n", lineWidth);
 		redraw();
 	}
 	
@@ -287,11 +286,11 @@ public class CanvasViewer extends PApplet  {
 	}
 	
 	private String penDownGcode() {
-		return String.format("G01 F%f Z%f ; Pen down\n", 500.0, 3.0);
+		return String.format("G01 F%f Z%f ; Pen down\n", 500.0, -3.0);
 	}
 	
 	private String penUpGcode() {
-		return String.format("G01 F%f Z%f ; Pen up\n", 500.0, -3.0);
+		return String.format("G01 F%f Z%f ; Pen up\n", 500.0, 3.0);
 	}
 		
 	private List<Point> pathToPoints(SVGOMPathElement path) {
@@ -329,23 +328,23 @@ public class CanvasViewer extends PApplet  {
 		}
 		
 		try {
-			Point home = new Point(533, 300);
 			Point offset = new Point(571, 571);
 			BufferedWriter writer = Files.newBufferedWriter(Path.of("out.gcode"));
 			writer.append("G90 ; Absolute positioning\n\n");
 			
 			boolean penDown = false;
 			for (int i = 0; i < pointLists.size(); i++) {
+				writer.append("\n");
 				List<Point> points = pointLists.get(i);
-				if (!penDown) {
-					writer.append(penDownGcode());
-					penDown = true;
-				}
 				for (int j = 0; j < points.size(); j++) {
-					Point adjustedPoint = new Point(points.get(j).x + home.x, points.get(j).y + home.y);
-					double nextL = Math.sqrt(Math.pow(adjustedPoint.x, 2) + Math.pow(adjustedPoint.y, 2)) - offset.x;
-					double nextR = Math.sqrt(Math.pow(machineWidth - adjustedPoint.x, 2) + Math.pow(adjustedPoint.y, 2)) - offset.y;
+					Point machinePoint = new Point(canvasLeftX + points.get(j).x, canvasTopY + points.get(j).y);
+					double nextL = Math.sqrt(Math.pow(machinePoint.x, 2) + Math.pow(machinePoint.y, 2)) - offset.x;
+					double nextR = Math.sqrt(Math.pow(machineWidth - machinePoint.x, 2) + Math.pow(machinePoint.y, 2)) - offset.y;
 					writer.append(String.format("G01 F%f X%f Y%f\n", 2000.0, nextL, nextR));
+					if (j == 0 && !penDown) {
+						writer.append(penDownGcode());
+						penDown = true;
+					}
 				}
 				if (i < pointLists.size() - 1) {
 					Point lastPoint = points.get(points.size() - 1);
