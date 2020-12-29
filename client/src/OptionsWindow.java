@@ -2,6 +2,10 @@ import java.awt.BorderLayout;
 import java.awt.EventQueue;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 
 import javax.swing.JFrame;
 import javax.swing.JPanel;
@@ -26,7 +30,13 @@ import java.awt.GraphicsConfiguration;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
 
+import org.ini4j.Ini;
+import org.ini4j.InvalidFileFormatException;
+import org.ini4j.Profile.Section;
+
 public class OptionsWindow extends JFrame implements KeyListener {
+	private static final String CONFIG_FILE = "config.ini";
+	private static final String SECTION_SPEEDS = "speeds";
 
 	private final CanvasViewer canvasViewer;
 	private JPanel contentPane;
@@ -39,6 +49,7 @@ public class OptionsWindow extends JFrame implements KeyListener {
 	private final int leftBound;
 	private final int upperBound;
 	private final double monitorScale;
+	private final Ini ini;
 	private JPanel panel_2;
 	private JTextField drawSpeed;
 	private JLabel lblNewLabel_2;
@@ -54,9 +65,19 @@ public class OptionsWindow extends JFrame implements KeyListener {
 	/**
 	 * Create the frame.
 	 */
-	public OptionsWindow(CanvasViewer canvasViewer) {
+	public OptionsWindow(CanvasViewer canvasViewer) throws InvalidFileFormatException, IOException {
 		this.canvasViewer = canvasViewer;
 		monitorScale = Toolkit.getDefaultToolkit().getScreenResolution() / 96.0;
+		
+		this.ini = new Ini();
+		if (Files.exists(Paths.get(CONFIG_FILE))) {
+			ini.load(new File(CONFIG_FILE));
+		} else {
+			ini.add(SECTION_SPEEDS);
+			ini.store(new File(CONFIG_FILE));
+		}
+		ini.setFile(new File(CONFIG_FILE));
+		Section speedConfig = ini.get(SECTION_SPEEDS);
 		
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		setBounds(100, 100, (int)(450 * monitorScale), (int)(300 * monitorScale));
@@ -109,8 +130,10 @@ public class OptionsWindow extends JFrame implements KeyListener {
 		
 		drawSpeed = new JTextField();
 		drawSpeed.setFont(new Font("Dialog", Font.PLAIN, getTextSize()));
-		panel_2.add(drawSpeed);
+		drawSpeed.setText(speedConfig.getOrDefault("draw_speed", "2000"));
 		drawSpeed.setColumns(10);
+		drawSpeed.addKeyListener(this);
+		panel_2.add(drawSpeed);
 		
 		lblNewLabel_2 = new JLabel("Draw Speed");
 		lblNewLabel_2.setFont(new Font("Dialog", Font.BOLD, getTextSize()));
@@ -121,7 +144,9 @@ public class OptionsWindow extends JFrame implements KeyListener {
 		
 		travelSpeed = new JTextField();
 		travelSpeed.setFont(new Font("Dialog", Font.PLAIN, getTextSize()));
+		travelSpeed.setText(speedConfig.getOrDefault("travel_speed", "2000"));
 		travelSpeed.setColumns(10);
+		travelSpeed.addKeyListener(this);
 		panel_3.add(travelSpeed);
 		
 		lblNewLabel_3 = new JLabel("Travel Speed");
@@ -147,11 +172,8 @@ public class OptionsWindow extends JFrame implements KeyListener {
 		
 		generateGcode = new JButton("Generate G-Code");
 		generateGcode.setFont(new Font("Dialog", Font.PLAIN, getTextSize()));
-		generateGcode.addActionListener(new ActionListener() {	
-			@Override
-			public void actionPerformed(ActionEvent arg0) {
+		generateGcode.addActionListener(event -> {
 				doGenerateGcode();
-			}
 		});
 		panel_5.add(generateGcode);
 		addKeyListener(this);
@@ -166,6 +188,15 @@ public class OptionsWindow extends JFrame implements KeyListener {
 	    upperBound = bounds.y + insets.top;
 	    
 	    setLineWidth();
+	}
+	
+	private void tryStoreIni() {
+		try {
+			ini.store();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 	
 	private int getTextSize() {
@@ -210,6 +241,12 @@ public class OptionsWindow extends JFrame implements KeyListener {
 			setScale();
 		} else if (event.getSource().equals(lineWidth)) {
 			setLineWidth();
+		} else if (event.getSource().equals(drawSpeed)) {
+			ini.put(SECTION_SPEEDS, "draw_speed", drawSpeed.getText());
+			tryStoreIni();
+		} else if (event.getSource().equals(travelSpeed)) {
+			ini.put(SECTION_SPEEDS, "travel_speed", travelSpeed.getText());
+			tryStoreIni();
 		}
 	}
 	
@@ -222,6 +259,8 @@ public class OptionsWindow extends JFrame implements KeyListener {
 	}
 	
 	private void doGenerateGcode() {
+		canvasViewer.setDrawSpeed(drawSpeed.getText());
+	    canvasViewer.setTravelSpeed(travelSpeed.getText());
 		canvasViewer.generateGcode();
 	}
 	

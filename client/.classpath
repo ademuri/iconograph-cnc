@@ -9,5 +9,6 @@
 	<classpathentry kind="lib" path="/home/adam/tools/processing-3.5.4/core/library/core.jar"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/batik"/>
 	<classpathentry kind="lib" path="/home/adam/tools/controlP5/library/controlP5.jar"/>
+	<classpathentry kind="lib" path="deps/ini4j-0.5.4/ini4j-0.5.4.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

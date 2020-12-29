@@ -47,9 +47,7 @@ public class CanvasViewer extends PApplet  {
 	private static final int SLIDER_HEIGHT = 100;
 	private static final int SLIDER_MARGIN = 20;
 	private static final int PANEL_WIDTH = 200;
-	
 	private static final int CANVAS_MARGIN = 50;
-	
 	private static final int FONT_SIZE = 40;
 	
 	// Note: all physical distances are in millimeters
@@ -77,6 +75,8 @@ public class CanvasViewer extends PApplet  {
 	private double scaleY = 1;
 	private double lineWidth = 1;
 	private boolean ready = false;
+	private double drawSpeed = 0;
+	private double travelSpeed = 0;
 	
 	public void setSize(int width, int height) {
 		windowX = width;
@@ -277,6 +277,14 @@ public class CanvasViewer extends PApplet  {
 		redraw();
 	}
 	
+	public void setDrawSpeed(String speed) {
+		drawSpeed = parseFloatOrDefault(speed, 0);
+	}
+	
+	public void setTravelSpeed(String speed) {
+		travelSpeed = parseFloatOrDefault(speed, 0);
+	}
+	
 	public double getScaleX() {
 		return scaleX;
 	}
@@ -340,10 +348,12 @@ public class CanvasViewer extends PApplet  {
 					Point machinePoint = new Point(canvasLeftX + points.get(j).x, canvasTopY + points.get(j).y);
 					double nextL = Math.sqrt(Math.pow(machinePoint.x, 2) + Math.pow(machinePoint.y, 2)) - offset.x;
 					double nextR = Math.sqrt(Math.pow(machineWidth - machinePoint.x, 2) + Math.pow(machinePoint.y, 2)) - offset.y;
-					writer.append(String.format("G01 F%f X%f Y%f\n", 2000.0, nextL, nextR));
 					if (j == 0 && !penDown) {
+						writer.append(String.format("G01 F%f X%f Y%f\n", travelSpeed, nextL, nextR));
 						writer.append(penDownGcode());
 						penDown = true;
+					} else {
+						writer.append(String.format("G01 F%f X%f Y%f\n", drawSpeed, nextL, nextR));
 					}
 				}
 				if (i < pointLists.size() - 1) {
