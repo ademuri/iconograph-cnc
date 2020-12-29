@@ -38,6 +38,7 @@ public class OptionsWindow extends JFrame implements KeyListener {
 	private final int processingHeight;
 	private final int leftBound;
 	private final int upperBound;
+	private final double monitorScale;
 	private JPanel panel_2;
 	private JTextField drawSpeed;
 	private JLabel lblNewLabel_2;
@@ -55,9 +56,10 @@ public class OptionsWindow extends JFrame implements KeyListener {
 	 */
 	public OptionsWindow(CanvasViewer canvasViewer) {
 		this.canvasViewer = canvasViewer;
+		monitorScale = Toolkit.getDefaultToolkit().getScreenResolution() / 96.0;
 		
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		setBounds(100, 100, 450, 300);
+		setBounds(100, 100, (int)(450 * monitorScale), (int)(300 * monitorScale));
 		contentPane = new JPanel();
 		contentPane.setBorder(new EmptyBorder(5, 5, 5, 5));
 		setContentPane(contentPane);
@@ -65,7 +67,7 @@ public class OptionsWindow extends JFrame implements KeyListener {
 		JPanel panel = new JPanel();
 		
 		scaleX = new JTextField();
-		scaleX.setFont(new Font("Dialog", Font.PLAIN, 18));
+		scaleX.setFont(new Font("Dialog", Font.PLAIN, getTextSize()));
 		scaleX.addFocusListener(new FocusAdapter() {
 			@Override
 			public void focusLost(FocusEvent e) {
@@ -76,14 +78,14 @@ public class OptionsWindow extends JFrame implements KeyListener {
 		scaleX.setToolTipText("");
 		scaleX.setColumns(10);
 		scaleX.addKeyListener(this);
-		lblNewLabel.setFont(new Font("Dialog", Font.BOLD, 18));
+		lblNewLabel.setFont(new Font("Dialog", Font.BOLD, getTextSize()));
 		panel.add(lblNewLabel);
 		lblNewLabel.setLabelFor(scaleX);
 		
 		JPanel panel_1 = new JPanel();
 		
 		scaleY = new JTextField();
-		scaleY.setFont(new Font("Dialog", Font.PLAIN, 18));
+		scaleY.setFont(new Font("Dialog", Font.PLAIN, getTextSize()));
 		scaleY.addKeyListener(this);
 		scaleY.addFocusListener(new FocusAdapter() {
 			@Override
@@ -95,7 +97,7 @@ public class OptionsWindow extends JFrame implements KeyListener {
 		scaleY.setColumns(10);
 		
 		JLabel lblNewLabel_1 = new JLabel("Scale Y");
-		lblNewLabel_1.setFont(new Font("Dialog", Font.BOLD, 18));
+		lblNewLabel_1.setFont(new Font("Dialog", Font.BOLD, getTextSize()));
 		panel_1.add(lblNewLabel_1);
 		lblNewLabel_1.setLabelFor(scaleY);
 		
@@ -106,24 +108,24 @@ public class OptionsWindow extends JFrame implements KeyListener {
 		contentPane.add(panel_2);
 		
 		drawSpeed = new JTextField();
-		drawSpeed.setFont(new Font("Dialog", Font.PLAIN, 18));
+		drawSpeed.setFont(new Font("Dialog", Font.PLAIN, getTextSize()));
 		panel_2.add(drawSpeed);
 		drawSpeed.setColumns(10);
 		
 		lblNewLabel_2 = new JLabel("Draw Speed");
-		lblNewLabel_2.setFont(new Font("Dialog", Font.BOLD, 18));
+		lblNewLabel_2.setFont(new Font("Dialog", Font.BOLD, getTextSize()));
 		panel_2.add(lblNewLabel_2);
 		
 		panel_3 = new JPanel();
 		contentPane.add(panel_3);
 		
 		travelSpeed = new JTextField();
-		travelSpeed.setFont(new Font("Dialog", Font.PLAIN, 18));
+		travelSpeed.setFont(new Font("Dialog", Font.PLAIN, getTextSize()));
 		travelSpeed.setColumns(10);
 		panel_3.add(travelSpeed);
 		
 		lblNewLabel_3 = new JLabel("Travel Speed");
-		lblNewLabel_3.setFont(new Font("Dialog", Font.BOLD, 18));
+		lblNewLabel_3.setFont(new Font("Dialog", Font.BOLD, getTextSize()));
 		panel_3.add(lblNewLabel_3);
 		
 		panel_4 = new JPanel();
@@ -131,19 +133,20 @@ public class OptionsWindow extends JFrame implements KeyListener {
 		
 		lineWidth = new JTextField();
 		lineWidth.setText("2");
-		lineWidth.setFont(new Font("Dialog", Font.PLAIN, 18));
+		lineWidth.setFont(new Font("Dialog", Font.PLAIN, getTextSize()));
 		lineWidth.setColumns(10);
 		lineWidth.addKeyListener(this);
 		panel_4.add(lineWidth);
 		
 		lblNewLabel_4 = new JLabel("Line Width");
-		lblNewLabel_4.setFont(new Font("Dialog", Font.BOLD, 18));
+		lblNewLabel_4.setFont(new Font("Dialog", Font.BOLD, getTextSize()));
 		panel_4.add(lblNewLabel_4);
 		
 		panel_5 = new JPanel();
 		contentPane.add(panel_5);
 		
 		generateGcode = new JButton("Generate G-Code");
+		generateGcode.setFont(new Font("Dialog", Font.PLAIN, getTextSize()));
 		generateGcode.addActionListener(new ActionListener() {	
 			@Override
 			public void actionPerformed(ActionEvent arg0) {
@@ -157,13 +160,16 @@ public class OptionsWindow extends JFrame implements KeyListener {
 		GraphicsConfiguration config = getGraphicsConfiguration();
 	    Rectangle bounds = config.getBounds();
 	    Insets insets = Toolkit.getDefaultToolkit().getScreenInsets(config);
-	    System.out.format("width: %d\n", getWidth());
 	    processingWidth = bounds.width - insets.right - insets.left - getWidth();
-	    processingHeight = bounds.height - insets.top - insets.bottom;
+	    processingHeight = bounds.height - insets.top - insets.bottom - 100;
 	    leftBound = bounds.x + insets.left;
 	    upperBound = bounds.y + insets.top;
 	    
 	    setLineWidth();
+	}
+	
+	private int getTextSize() {
+		return (int)(18 * monitorScale);
 	}
 	
 	public void init() {
