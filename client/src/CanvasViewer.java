@@ -53,14 +53,16 @@ public class CanvasViewer extends PApplet  {
 	// Note: all physical distances are in millimeters
 	private static final double MM_PER_INCH = 25.4;
 	//private static final double canvasWidth = 18 * MM_PER_INCH;
-	private static final double canvasWidth = 12 * MM_PER_INCH;
-	private static final double canvasHeight = 12 * MM_PER_INCH;
-	private static final double machineWidth = 42 * MM_PER_INCH;
-	private static final double machineHeight = 21 * MM_PER_INCH;
+	private static final double canvasWidth = 15 * MM_PER_INCH;
+	private static final double canvasHeight = 11 * MM_PER_INCH;
+	private static final double machineWidth = 43 * MM_PER_INCH;
+	private static final double machineHeight = 24.5 * MM_PER_INCH;
 	private static final double canvasLeftX = (machineWidth - canvasWidth) / 2;
 	private static final double canvasRightX = canvasLeftX + canvasWidth;
-	private static final double canvasTopY = machineHeight - canvasHeight;
-	private static final double canvasBottomY = machineHeight;
+	private static final double canvasTopY = machineHeight - canvasHeight - 6 * MM_PER_INCH;
+	private static final double canvasBottomY = machineHeight - 3 * MM_PER_INCH;
+	
+	private static final Point homingLR = new Point(36 * MM_PER_INCH, 35.5 * MM_PER_INCH);
 	
 	private PVector canvasStart = new PVector(CANVAS_MARGIN, CANVAS_MARGIN);
 	private float canvasScale = 1;
@@ -336,7 +338,6 @@ public class CanvasViewer extends PApplet  {
 		}
 		
 		try {
-			Point offset = new Point(571, 571);
 			BufferedWriter writer = Files.newBufferedWriter(Path.of("out.gcode"));
 			writer.append("G90 ; Absolute positioning\n\n");
 			
@@ -346,8 +347,14 @@ public class CanvasViewer extends PApplet  {
 				List<Point> points = pointLists.get(i);
 				for (int j = 0; j < points.size(); j++) {
 					Point machinePoint = new Point(canvasLeftX + points.get(j).x, canvasTopY + points.get(j).y);
-					double nextL = Math.sqrt(Math.pow(machinePoint.x, 2) + Math.pow(machinePoint.y, 2)) - offset.x;
-					double nextR = Math.sqrt(Math.pow(machineWidth - machinePoint.x, 2) + Math.pow(machinePoint.y, 2)) - offset.y;
+					if (machinePoint.x > canvasRightX || machinePoint.x < canvasLeftX) {
+						throw new IllegalArgumentException(String.format("Point X out of bounds: (%f, %f), X: %f -> %f", machinePoint.x, machinePoint.y, canvasLeftX, canvasRightX));
+					}
+					if (machinePoint.y > canvasBottomY || machinePoint.y < canvasTopY) {
+						throw new IllegalArgumentException(String.format("Point Y out of bounds: (%f, %f),  Y: %f -> %f", machinePoint.x, machinePoint.y, canvasTopY, canvasBottomY));
+					}
+					double nextL = Math.sqrt(Math.pow(machinePoint.x, 2) + Math.pow(machinePoint.y, 2)) - homingLR.x;
+					double nextR = Math.sqrt(Math.pow(machineWidth - machinePoint.x, 2) + Math.pow(machinePoint.y, 2)) - homingLR.y;
 					if (j == 0 && !penDown) {
 						writer.append(String.format("G01 F%f X%f Y%f\n", travelSpeed, nextL, nextR));
 						writer.append(penDownGcode());
