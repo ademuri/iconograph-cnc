@@ -301,7 +301,7 @@ public class CanvasViewer extends PApplet  {
 	}
 	
 	private String penDownGcode() {
-		return String.format("G01 F%f Z%f ; Pen down\n", 500.0, -3.0);
+		return String.format("G01 F%f Z%f ; Pen down\nG04 P1000 ; Delay for 1s", 500.0, -3.0);
 	}
 	
 	private String penUpGcode() {
