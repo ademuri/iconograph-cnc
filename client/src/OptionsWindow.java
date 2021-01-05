@@ -173,7 +173,8 @@ public class OptionsWindow extends JFrame implements KeyListener {
 		generateGcode = new JButton("Generate G-Code");
 		generateGcode.setFont(new Font("Dialog", Font.PLAIN, getTextSize()));
 		generateGcode.addActionListener(event -> {
-				doGenerateGcode();
+			updateSpeeds();
+			doGenerateGcode();
 		});
 		panel_5.add(generateGcode);
 		addKeyListener(this);
@@ -227,6 +228,7 @@ public class OptionsWindow extends JFrame implements KeyListener {
 	@Override
 	public void keyPressed(KeyEvent event) {
 		if (event.getKeyCode() == KeyEvent.VK_ESCAPE) {
+			updateSpeeds();
 			System.exit(0);
 		}
 	}
@@ -242,12 +244,16 @@ public class OptionsWindow extends JFrame implements KeyListener {
 		} else if (event.getSource().equals(lineWidth)) {
 			setLineWidth();
 		} else if (event.getSource().equals(drawSpeed)) {
-			ini.put(SECTION_SPEEDS, "draw_speed", drawSpeed.getText());
-			tryStoreIni();
+			updateSpeeds();
 		} else if (event.getSource().equals(travelSpeed)) {
-			ini.put(SECTION_SPEEDS, "travel_speed", travelSpeed.getText());
-			tryStoreIni();
+			updateSpeeds();
 		}
+	}
+	
+	private void updateSpeeds() {
+		ini.put(SECTION_SPEEDS, "draw_speed", drawSpeed.getText());
+		ini.put(SECTION_SPEEDS, "travel_speed", travelSpeed.getText());
+		tryStoreIni();
 	}
 	
 	private void setScale() {
