@@ -67,7 +67,8 @@ public class CanvasViewer extends PApplet  {
 	private static final double canvasTopY = machineHeight - canvasHeight - 6 * MM_PER_INCH;
 	private static final double canvasBottomY = machineHeight - 3 * MM_PER_INCH;
 	
-	private static final Point homingLR = new Point(36 * MM_PER_INCH, 35.5 * MM_PER_INCH);
+	//private static final Point homingLR = new Point(36 * MM_PER_INCH, 35.5 * MM_PER_INCH);
+	private static final Point homingLR = new Point(923, 918);
 	
 	private PVector canvasStart = new PVector(CANVAS_MARGIN, CANVAS_MARGIN);
 	private float canvasScale = 1;
@@ -128,7 +129,9 @@ public class CanvasViewer extends PApplet  {
 		    SAXSVGDocumentFactory f = new SAXSVGDocumentFactory(parser);
 		     //doc = f.createDocument("example.svg");
 		     //doc = f.createDocument("torus.svg");
-		    doc = f.createDocument("squares.svg");
+		    //doc = f.createDocument("squares.svg");
+		    //doc = f.createDocument("cal.svg");
+		    doc = f.createDocument("lines.svg");
 		} catch (IOException ex) {
 			ex.printStackTrace();
 			exit();
@@ -301,11 +304,11 @@ public class CanvasViewer extends PApplet  {
 	}
 	
 	private String penDownGcode() {
-		return String.format("G01 F%f Z%f ; Pen down\nG04 P1000 ; Delay for 1s", 500.0, -3.0);
+		return String.format("G01 F%f Z%f ; Pen down\nG04 P1 ; Delay for 1s\n", 500.0, -3.0);
 	}
 	
 	private String penUpGcode() {
-		return String.format("G01 F%f Z%f ; Pen up\n", 500.0, 3.0);
+		return String.format("G01 F%f Z%f ; Pen up\n", 500.0, -8.0);
 	}
 		
 	private List<Point> pathToPoints(SVGOMPathElement path) {
@@ -331,7 +334,7 @@ public class CanvasViewer extends PApplet  {
 		return points;
 	}
 	
-	final double h3 = 30; // Center of mass distance from pen?
+	final double h3 = 25; // Center of mass distance from pen?
 	final double r = 20 * 2 / (2 * Math.PI); // Pulley radius: 20 teeth, 2mm pitch
 	final double h = 24.4;	// Distance from belt support center to pen center
 	final double theta = 55; // Angle between belt support points and line to pen center
