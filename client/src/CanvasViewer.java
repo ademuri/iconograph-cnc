@@ -67,6 +67,8 @@ public class CanvasViewer extends PApplet  {
 	private static final double canvasTopY = machineHeight - canvasHeight - 6 * MM_PER_INCH;
 	private static final double canvasBottomY = machineHeight - 3 * MM_PER_INCH;
 	
+	private final double maxLineSegmentLength = 2;
+	
 	private static final Point homingLR = new Point(923, 918);
 	
 	// Where the carriage should go after drawing
@@ -129,11 +131,11 @@ public class CanvasViewer extends PApplet  {
 		try {
 		    String parser = XMLResourceDescriptor.getXMLParserClassName();
 		    SAXSVGDocumentFactory f = new SAXSVGDocumentFactory(parser);
-		     //doc = f.createDocument("example.svg");
+		     doc = f.createDocument("example.svg");
 		     //doc = f.createDocument("torus.svg");
 		    //doc = f.createDocument("squares.svg");
 		    //doc = f.createDocument("cal.svg");
-		    doc = f.createDocument("lines.svg");
+		    //doc = f.createDocument("lines.svg");
 		} catch (IOException ex) {
 			ex.printStackTrace();
 			exit();
@@ -315,10 +317,10 @@ public class CanvasViewer extends PApplet  {
 		
 	private List<Point> pathToPoints(SVGOMPathElement path) {
 		List<Point> points = new ArrayList<>();
-		float length = path.getTotalLength();
-		float step = length / 10;
-		for (float i = 0; i <= length; i += step) {
-			SVGPoint point = path.getPointAtLength(i);
+		double length = path.getTotalLength();
+		double step = length / Math.ceil(length * Math.sqrt(Math.pow(scaleX, 2) + Math.pow(scaleY, 2)) / maxLineSegmentLength);
+		for (double i = 0; i <= length; i += step) {
+			SVGPoint point = path.getPointAtLength((float) i);
 			double x = point.getX() * scaleX;
 			double y = point.getY() * scaleY;
 			points.add(new Point(x, y));
@@ -329,9 +331,27 @@ public class CanvasViewer extends PApplet  {
 	private List<Point> polylineToPoints(SVGOMPolylineElement polyline) {
 		List<Point> points = new ArrayList<>();
 		SVGPointList pointList = polyline.getPoints();
+		Point prevPoint = null;
 		for (int i = 0; i < pointList.getNumberOfItems(); i++) {
-			SVGPoint point = pointList.getItem(i);
-			points.add(new Point(point.getX() * scaleX, point.getY() * scaleY));
+			SVGPoint svgPoint = pointList.getItem(i);
+			Point point = new Point(svgPoint.getX() * scaleX, svgPoint.getY() * scaleY);
+			if (prevPoint == null) {
+				points.add(point);
+			} else {
+				double xDelta = point.x - prevPoint.x;
+				double yDelta = point.y - prevPoint.y;
+				double length = Math.sqrt(Math.pow(xDelta, 2) + Math.pow(yDelta, 2));
+				double steps = Math.ceil(length / maxLineSegmentLength);
+				for (int step = 1; step < steps; step++) {
+					Point interpolatedPoint = new Point(prevPoint.x + xDelta * step / steps, prevPoint.y + yDelta * step / steps);
+					points.add(interpolatedPoint);
+				}
+			}
+			
+			prevPoint = point;
+		}
+		if (prevPoint != null) {
+			points.add(prevPoint);
 		}
 		return points;
 	}
