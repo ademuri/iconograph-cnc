@@ -67,8 +67,10 @@ public class CanvasViewer extends PApplet  {
 	private static final double canvasTopY = machineHeight - canvasHeight - 6 * MM_PER_INCH;
 	private static final double canvasBottomY = machineHeight - 3 * MM_PER_INCH;
 	
-	//private static final Point homingLR = new Point(36 * MM_PER_INCH, 35.5 * MM_PER_INCH);
 	private static final Point homingLR = new Point(923, 918);
+	
+	// Where the carriage should go after drawing
+	private static final Point finalPosition = new Point(canvasRightX + 2 * MM_PER_INCH, canvasTopY);
 	
 	private PVector canvasStart = new PVector(CANVAS_MARGIN, CANVAS_MARGIN);
 	private float canvasScale = 1;
@@ -448,6 +450,11 @@ public class CanvasViewer extends PApplet  {
 		return new Point(left, right);
 	}
 	
+	private Point machineToBeltPoint(Point machinePoint) {
+		Point beltPoint = computePoint(machinePoint.x, machinePoint.y);
+		return new Point(beltPoint.x - homingLR.x, beltPoint.y - homingLR.y);
+	}
+	
 	public void generateGcode() {
 		// First, process all SVG elements into Points. Group each SVG primitives like polylines and paths into their own lists of points - each inner list should be connected.
 		List<List<Point>> pointLists = new ArrayList<>();
@@ -464,6 +471,8 @@ public class CanvasViewer extends PApplet  {
 			writer.append("G90 ; Absolute positioning\n\n");
 			
 			boolean penDown = false;
+			writer.append(penUpGcode());
+			
 			for (int i = 0; i < pointLists.size(); i++) {
 				writer.append("\n");
 				List<Point> points = pointLists.get(i);
@@ -475,8 +484,7 @@ public class CanvasViewer extends PApplet  {
 					if (machinePoint.y > canvasBottomY || machinePoint.y < canvasTopY) {
 						throw new IllegalArgumentException(String.format("Point Y out of bounds: (%f, %f),  Y: %f -> %f", machinePoint.x, machinePoint.y, canvasTopY, canvasBottomY));
 					}
-					Point beltPoint = computePoint(machinePoint.x, machinePoint.y);
-					beltPoint = new Point(beltPoint.x - homingLR.x, beltPoint.y - homingLR.y);
+					Point beltPoint = machineToBeltPoint(machinePoint);
 					if (j == 0 && !penDown) {
 						writer.append(String.format("G01 F%f X%f Y%f\n", travelSpeed, beltPoint.x, beltPoint.y));
 						writer.append(penDownGcode());
@@ -501,6 +509,11 @@ public class CanvasViewer extends PApplet  {
 					penDown = false;
 				}
 			}
+			
+			writer.append("\n; Final position\n");
+			writer.append(penUpGcode());
+			Point finalPositionBelt = machineToBeltPoint(finalPosition);
+			writer.append(String.format("G01 F%f X%f Y%f\n", travelSpeed, finalPositionBelt.x, finalPositionBelt.y));
 			writer.close();
 		} catch (IOException e) {
 			e.printStackTrace();
