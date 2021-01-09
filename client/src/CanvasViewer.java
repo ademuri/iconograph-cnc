@@ -3,8 +3,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Comparator;
 import java.util.List;
 
 import org.apache.batik.anim.dom.SAXSVGDocumentFactory;
@@ -18,10 +16,6 @@ import org.apache.batik.bridge.GVTBuilder;
 import org.apache.batik.bridge.UserAgent;
 import org.apache.batik.bridge.UserAgentAdapter;
 import org.apache.batik.util.XMLResourceDescriptor;
-import org.apache.commons.math3.linear.LUDecomposition;
-import org.apache.commons.math3.linear.MatrixUtils;
-import org.apache.commons.math3.linear.RealMatrix;
-import org.apache.commons.math3.linear.RealVector;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -29,17 +23,10 @@ import org.w3c.dom.svg.SVGLength;
 import org.w3c.dom.svg.SVGPoint;
 import org.w3c.dom.svg.SVGPointList;
 
-import controlP5.CallbackEvent;
 import controlP5.ControlEvent;
-import controlP5.ControlFont;
-import controlP5.ControlListener;
-import controlP5.CallbackListener;
 import controlP5.ControlP5;
-import controlP5.Controller;
 import controlP5.Slider;
-import controlP5.Textfield;
 import processing.core.PApplet;
-import processing.core.PFont;
 import processing.core.PVector;
 
 
@@ -77,7 +64,7 @@ public class CanvasViewer extends PApplet  {
 	private PVector canvasStart = new PVector(CANVAS_MARGIN, CANVAS_MARGIN);
 	private float canvasScale = 1;
 	
-	private final List<SVGGraphicsElement> svgGraphics = new ArrayList<>();
+	private final List<List<Point>> lines = new ArrayList<>();
 	
 	private int prevSliderValue = 0;
 	
@@ -161,9 +148,9 @@ public class CanvasViewer extends PApplet  {
 		
 		//svgGraphics.sort(Comparator.<SVGGraphicsElement>comparingDouble(CanvasViewer::svgLength).reversed());
 		
-		slider.getControl().setNumberOfTickMarks(svgGraphics.size() + 1)
-			.setRange(0, svgGraphics.size())
-			.setValue(svgGraphics.size());
+		slider.getControl().setNumberOfTickMarks(lines.size() + 1)
+			.setRange(0, lines.size())
+			.setValue(lines.size());
 		
 		SVGLength width = ((SVGOMSVGElement) rootElement).getWidth().getBaseVal();
 		width.convertToSpecifiedUnits(SVGLength.SVG_LENGTHTYPE_MM);
@@ -186,27 +173,13 @@ public class CanvasViewer extends PApplet  {
 		return ready;
 	}
 	
-	private static float svgLength(Element element) {
-		if (element instanceof SVGOMPathElement) {
-			SVGOMPathElement path = (SVGOMPathElement) element;
-			return path.getTotalLength();
-		} else if (element instanceof SVGOMPolylineElement) {
-			SVGOMPolylineElement polyline = (SVGOMPolylineElement) element;
-			float length = 0;
-			for (int i = 0; i < polyline.getPoints().getNumberOfItems() - 1; i++) {
-				SVGPoint start = polyline.getPoints().getItem(i);
-				SVGPoint end = polyline.getPoints().getItem(i + 1);
-				length +=  Math.sqrt(Math.pow(end.getX() - start.getX(), 2) + Math.pow(end.getY() - start.getY(), 2));
-			}
-			return length;
-		}
-		
-		return 0;
-	}
-	
 	private void traverse(Element element) {
 		if (element instanceof SVGGraphicsElement) {
-			svgGraphics.add((SVGGraphicsElement) element);
+			if (element instanceof SVGOMPathElement) {
+				lines.add(pathToPoints((SVGOMPathElement) element));
+			} else if (element instanceof SVGOMPolylineElement) {
+				lines.add(polylineToPoints((SVGOMPolylineElement) element));
+			}
 		}
 		
 		for (int i = 0; i < element.getChildNodes().getLength(); i++) {
@@ -225,7 +198,7 @@ public class CanvasViewer extends PApplet  {
 		}
 	}
 	
-	private void canvasLine(float x1, float y1, float x2, float y2) {
+	private void canvasLine(double x1, double y1, double x2, double y2) {
 		line(canvasStart.x + x1 * canvasScale * scaleX, canvasStart.y + y1 * canvasScale * scaleY, canvasStart.x +  x2 * canvasScale * scaleX, canvasStart.y + y2 * canvasScale * scaleY);
 	}
 	
@@ -233,29 +206,11 @@ public class CanvasViewer extends PApplet  {
 		line((float) d, (float) e, (float) f, (float) g);
 	}
 
-	private void drawSvgGraphic(SVGGraphicsElement element) {
-		if (element instanceof SVGOMPathElement) {
-			SVGOMPathElement pathElement = (SVGOMPathElement) element;
-			float length = pathElement.getTotalLength();
-			float step = length / 20;
-			for (float i = 0; i < length; i += step) {
-				float endLength = i + step;
-				if (endLength > length) {
-					endLength = length;
-				}
-				
-				SVGPoint start = pathElement.getPointAtLength(i);
-				SVGPoint end = pathElement.getPointAtLength(endLength);
-				canvasLine(start.getX(), start.getY(), end.getX(), end.getY());
-			}
-		} else if (element instanceof SVGOMPolylineElement) {
-			SVGOMPolylineElement polyline = (SVGOMPolylineElement) element;
-			SVGPointList pointList = polyline.getPoints();
-			for (int i = 0; i < pointList.getNumberOfItems() - 1; i++) {
-				SVGPoint start = pointList.getItem(i);
-				SVGPoint end = pointList.getItem(i + 1);
-				canvasLine(start.getX(), start.getY(), end.getX(), end.getY());
-			}
+	private void drawLine(List<Point> line) {
+		for (int i = 1; i < line.size(); i++) {
+			Point prevPoint = line.get(i - 1);
+			Point point = line.get(i);
+			canvasLine(prevPoint.x, prevPoint.y, point.x, point.y);
 		}
 	}
 	
@@ -266,7 +221,7 @@ public class CanvasViewer extends PApplet  {
 		rect(canvasStart.x, canvasStart.y, (float)(canvasStart.x + canvasWidth * canvasScale), (float)(canvasStart.y + canvasHeight * canvasScale));
 		strokeWeight((float)(lineWidth * canvasScale));
 		for (int i = 0; i < slider.getValue(); i++) {
-			drawSvgGraphic(svgGraphics.get(i));
+			drawLine(lines.get(i));
 		}
 	}
 	
@@ -368,16 +323,6 @@ public class CanvasViewer extends PApplet  {
 	}
 	
 	public void generateGcode() {
-		// First, process all SVG elements into Points. Group each SVG primitives like polylines and paths into their own lists of points - each inner list should be connected.
-		List<List<Point>> pointLists = new ArrayList<>();
-		for (SVGGraphicsElement graphic : svgGraphics) {
-			if (graphic instanceof SVGOMPathElement) {
-				pointLists.add(pathToPoints((SVGOMPathElement) graphic));
-			} else if (graphic instanceof SVGOMPolylineElement) {
-				pointLists.add(polylineToPoints((SVGOMPolylineElement) graphic));
-			}
-		}
-		
 		try {
 			BufferedWriter writer = Files.newBufferedWriter(Path.of("out.gcode"));
 			writer.append("G90 ; Absolute positioning\n\n");
@@ -385,9 +330,9 @@ public class CanvasViewer extends PApplet  {
 			boolean penDown = false;
 			writer.append(penUpGcode());
 			
-			for (int i = 0; i < pointLists.size(); i++) {
+			for (int i = 0; i < lines.size(); i++) {
 				writer.append("\n");
-				List<Point> points = pointLists.get(i);
+				List<Point> points = lines.get(i);
 				for (int j = 0; j < points.size(); j++) {
 					Point machinePoint = new Point(canvasLeftX + points.get(j).x, canvasTopY + points.get(j).y);
 					if (machinePoint.x > canvasRightX || machinePoint.x < canvasLeftX) {
@@ -405,9 +350,9 @@ public class CanvasViewer extends PApplet  {
 						writer.append(String.format("G01 F%f X%f Y%f\n", drawSpeed, beltPoint.x, beltPoint.y));
 					}
 				}
-				if (i < pointLists.size() - 1) {
+				if (i < lines.size() - 1) {
 					Point lastPoint = points.get(points.size() - 1);
-					Point nextPoint = pointLists.get(i + 1).get(0);
+					Point nextPoint = lines.get(i + 1).get(0);
 					
 					if (Math.abs(nextPoint.x - lastPoint.x) < .01 && Math.abs(nextPoint.y - lastPoint.y) < .01) {
 						// Keep pen down
