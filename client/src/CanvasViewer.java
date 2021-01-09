@@ -126,9 +126,9 @@ public class CanvasViewer extends PApplet  {
 		    String parser = XMLResourceDescriptor.getXMLParserClassName();
 		    SAXSVGDocumentFactory f = new SAXSVGDocumentFactory(parser);
 		    // TODO: add a file picker!
-		    //doc = f.createDocument("example.svg");
+		    doc = f.createDocument("example.svg");
 		    //doc = f.createDocument("torus.svg");
-		    doc = f.createDocument("squares.svg");
+		    //doc = f.createDocument("squares.svg");
 		    //doc = f.createDocument("cal.svg");
 		    //doc = f.createDocument("lines.svg");
 		    //doc = f.createDocument("small-torus.svg");
@@ -156,16 +156,19 @@ public class CanvasViewer extends PApplet  {
 			width.convertToSpecifiedUnits(SVGLength.SVG_LENGTHTYPE_MM);
 			SVGLength height = ((SVGOMSVGElement) rootElement).getHeight().getBaseVal();
 			height.convertToSpecifiedUnits(SVGLength.SVG_LENGTHTYPE_MM);
-			double scale = 1;
-			double svgWidth = width.getValueInSpecifiedUnits();
-			double svgHeight = height.getValueInSpecifiedUnits();
-			if (canvasWidth > svgWidth) {
-				scale = Math.min(canvasWidth / svgWidth, canvasHeight / svgHeight);
-			} else {
-				scale = 1 / Math.min(svgWidth / canvasWidth, svgHeight / canvasHeight);
+			
+			if (!ready) {
+				double scale = 1;
+				double svgWidth = width.getValueInSpecifiedUnits();
+				double svgHeight = height.getValueInSpecifiedUnits();
+				if (canvasWidth > svgWidth) {
+					scale = Math.min(canvasWidth / svgWidth, canvasHeight / svgHeight);
+				} else {
+					scale = 1 / Math.min(svgWidth / canvasWidth, svgHeight / canvasHeight);
+				}
+				scaleX = scale;
+				scaleY = scale;
 			}
-			scaleX = scale;
-			scaleY = scale;
 			
 			traverse(rootElement);
 	
