@@ -1,0 +1,783 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape" viewBox="0 0 150 100" width="150mm" height="100mm" stroke="black" fill="none" stroke-width="0.3">
+<g inkscape:groupmode="layer" id="layer1"  inkscape:label="1-dark" style="display:inline" stroke="black" stroke-width="0.5">
+<polyline points="15 12
+33 30"/>
+<polyline points="21 10
+37 26"/>
+<polyline points="29 10
+45 26"/>
+<polyline points="37 10
+47 20
+49 18"/>
+<polyline points="45 10
+51 16
+53 14"/>
+<polyline points="53 10
+57 14"/>
+<polyline points="61 10
+67 16
+73 10"/>
+<polyline points="77 10
+79 12
+81 10"/>
+<polyline points="89 14
+87 12
+83 16
+81 14"/>
+<polyline points="97 14
+95 12
+83 24
+81 22"/>
+<polyline points="101 10
+103 12
+105 10"/>
+<polyline points="113 10
+103 20
+101 18"/>
+<polyline points="121 10
+105 26"/>
+<polyline points="129 10
+121 18"/>
+<polyline points="135 12
+119 28
+117 26"/>
+<polyline points="57 18
+59 16
+67 24
+69 22"/>
+<polyline points="77 18
+75 16
+71 20
+69 18"/>
+<polyline points="97 18
+101 14"/>
+<polyline points="15 20
+17 22"/>
+<polyline points="53 18
+61 26"/>
+<polyline points="77 22
+81 18"/>
+<polyline points="97 22
+95 20
+91 24
+89 22"/>
+<polyline points="121 22
+119 20
+107 32
+103 28
+101 30"/>
+<polyline points="135 20
+127 28
+125 26"/>
+<polyline points="73 22
+77 26"/>
+<polyline points="101 22
+95 28
+93 26"/>
+<polyline points="15 28
+19 24
+29 34"/>
+<polyline points="37 30
+39 28
+45 34"/>
+<polyline points="45 30
+51 24
+59 32
+63 28
+71 36
+73 34"/>
+<polyline points="69 26
+75 32
+79 28
+81 30"/>
+<polyline points="89 26
+81 34"/>
+<polyline points="135 28
+123 40
+121 38"/>
+<polyline points="17 30
+31 44
+33 42"/>
+<polyline points="33 34
+35 32
+37 34"/>
+<polyline points="53 30
+45 38"/>
+<polyline points="93 30
+85 38"/>
+<polyline points="101 34
+99 32
+93 38"/>
+<polyline points="117 30
+111 36
+109 34"/>
+<polyline points="125 34
+123 32
+117 38"/>
+<polyline points="15 36
+21 42"/>
+<polyline points="29 38
+31 36
+35 40
+39 36
+45 42"/>
+<polyline points="53 38
+55 36
+59 40
+61 38"/>
+<polyline points="61 34
+63 36
+65 34"/>
+<polyline points="105 34
+97 42"/>
+<polyline points="133 34
+135 36"/>
+<polyline points="49 38
+57 46"/>
+<polyline points="65 38
+71 44
+79 36
+85 42"/>
+<polyline points="109 42
+107 40
+103 44
+101 42"/>
+<polyline points="113 38
+119 44
+121 42"/>
+<polyline points="129 42
+131 40
+133 42"/>
+<polyline points="15 44
+17 42"/>
+<polyline points="41 46
+39 44
+33 50"/>
+<polyline points="45 46
+47 44
+49 46"/>
+<polyline points="65 42
+55 52
+51 48
+49 50"/>
+<polyline points="81 46
+79 44
+69 54"/>
+<polyline points="85 46
+91 40
+97 46"/>
+<polyline points="109 46
+113 42"/>
+<polyline points="125 46
+127 44
+129 46"/>
+<polyline points="135 44
+129 50"/>
+<polyline points="17 46
+19 48
+23 44
+39 60
+41 58"/>
+<polyline points="41 50
+43 48
+51 56
+53 54"/>
+<polyline points="65 50
+67 48
+69 50"/>
+<polyline points="81 50
+83 48
+89 54"/>
+<polyline points="89 50
+93 46"/>
+<polyline points="101 46
+95 52
+93 50"/>
+<polyline points="105 46
+109 50"/>
+<polyline points="113 50
+117 46"/>
+<polyline points="15 52
+17 50"/>
+<polyline points="25 50
+15 60"/>
+<polyline points="37 54
+39 52
+43 56
+45 54"/>
+<polyline points="61 54
+63 52
+65 54"/>
+<polyline points="77 50
+81 54"/>
+<polyline points="101 50
+105 54"/>
+<polyline points="113 54
+111 52
+101 62"/>
+<polyline points="117 50
+119 52
+123 48
+135 60"/>
+<polyline points="133 54
+135 52"/>
+<polyline points="29 58
+27 56
+19 64
+17 62"/>
+<polyline points="57 54
+61 58"/>
+<polyline points="65 58
+67 56
+73 62"/>
+<polyline points="73 58
+75 56
+77 58"/>
+<polyline points="81 58
+85 54"/>
+<polyline points="89 58
+91 56
+93 58"/>
+<polyline points="97 58
+99 56
+101 58"/>
+<polyline points="113 58
+117 54"/>
+<polyline points="121 54
+125 58"/>
+<polyline points="33 62
+31 60
+15 76"/>
+<polyline points="49 58
+41 66"/>
+<polyline points="53 58
+55 60
+57 58"/>
+<polyline points="61 62
+63 60
+67 64
+69 62"/>
+<polyline points="77 62
+79 60
+83 64
+85 62"/>
+<polyline points="85 58
+93 66"/>
+<polyline points="93 62
+95 60
+97 62"/>
+<polyline points="109 58
+117 66"/>
+<polyline points="117 62
+119 60
+123 64
+127 60
+129 62"/>
+<polyline points="37 62
+25 74"/>
+<polyline points="49 62
+51 64
+53 62"/>
+<polyline points="57 62
+61 66"/>
+<polyline points="73 66
+75 64
+81 70"/>
+<polyline points="97 66
+99 64
+101 66"/>
+<polyline points="109 66
+107 64
+101 70"/>
+<polyline points="129 66
+131 64
+135 68"/>
+<polyline points="15 68
+17 66"/>
+<polyline points="37 66
+43 72
+45 70"/>
+<polyline points="45 66
+47 68
+49 66"/>
+<polyline points="53 66
+55 68
+57 66"/>
+<polyline points="65 70
+63 68
+59 72
+57 70"/>
+<polyline points="69 66
+77 74"/>
+<polyline points="89 66
+75 80
+73 78"/>
+<polyline points="93 70
+95 68
+105 78"/>
+<polyline points="109 70
+111 68
+113 70"/>
+<polyline points="125 66
+135 76"/>
+<polyline points="37 70
+17 90"/>
+<polyline points="49 70
+51 72
+53 70"/>
+<polyline points="65 74
+67 72
+71 76
+73 74"/>
+<polyline points="93 74
+91 72
+87 76
+85 74"/>
+<polyline points="105 70
+111 76
+119 68
+135 84"/>
+<polyline points="25 78
+23 76
+15 84"/>
+<polyline points="49 74
+43 80
+39 76
+25 90"/>
+<polyline points="53 74
+59 80
+63 76
+67 80
+69 78"/>
+<polyline points="97 74
+89 82"/>
+<polyline points="117 74
+133 90"/>
+<polyline points="49 82
+51 80
+53 82"/>
+<polyline points="81 78
+89 86"/>
+<polyline points="97 78
+105 86"/>
+<polyline points="105 82
+107 80
+117 90"/>
+<polyline points="113 82
+115 80
+125 90"/>
+<polyline points="41 82
+33 90"/>
+<polyline points="49 86
+47 84
+41 90"/>
+<polyline points="57 82
+49 90"/>
+<polyline points="61 86
+65 82"/>
+<polyline points="73 86
+71 84
+65 90"/>
+<polyline points="81 82
+73 90"/>
+<polyline points="93 82
+99 88
+101 86"/>
+<polyline points="57 90
+59 88
+61 90"/>
+<polyline points="81 90
+83 88
+85 90"/>
+<polyline points="89 90
+91 88
+93 90"/>
+<polyline points="105 90
+107 88
+109 90"/>
+</g>
+<g inkscape:groupmode="layer" id="layer2"  inkscape:label="2-light" style="display:inline" stroke="grey" stroke-width="0.1">
+<polyline points="17 10
+35 28
+37 26"/>
+<polyline points="25 10
+43 28
+45 26"/>
+<polyline points="33 10
+47 24
+51 20
+59 28
+61 26"/>
+<polyline points="41 10
+49 18"/>
+<polyline points="49 10
+53 14"/>
+<polyline points="57 10
+69 22"/>
+<polyline points="65 10
+67 12
+69 10"/>
+<polyline points="81 14
+85 10"/>
+<polyline points="89 10
+91 12
+93 10"/>
+<polyline points="97 10
+101 14"/>
+<polyline points="109 10
+101 18"/>
+<polyline points="117 10
+87 40
+85 38"/>
+<polyline points="125 10
+107 28
+105 26"/>
+<polyline points="133 10
+123 20
+121 18"/>
+<polyline points="15 16
+31 32
+33 30"/>
+<polyline points="53 18
+57 14"/>
+<polyline points="69 18
+75 12
+81 18"/>
+<polyline points="89 14
+81 22"/>
+<polyline points="97 14
+89 22"/>
+<polyline points="135 16
+125 26"/>
+<polyline points="57 18
+73 34"/>
+<polyline points="73 22
+77 18"/>
+<polyline points="97 18
+101 22"/>
+<polyline points="15 24
+17 22"/>
+<polyline points="69 26
+71 24
+75 28
+77 26"/>
+<polyline points="77 22
+83 28
+87 24
+89 26"/>
+<polyline points="93 26
+97 22"/>
+<polyline points="117 26
+121 22"/>
+<polyline points="135 24
+127 32
+123 28
+113 38"/>
+<polyline points="17 30
+19 28
+27 36
+29 34"/>
+<polyline points="53 30
+51 28
+47 32
+45 30"/>
+<polyline points="93 30
+91 28
+83 36
+81 34"/>
+<polyline points="117 30
+115 28
+109 34"/>
+<polyline points="15 32
+31 48
+39 40
+43 44
+45 42"/>
+<polyline points="37 30
+43 36
+45 34"/>
+<polyline points="61 34
+63 32
+65 34"/>
+<polyline points="81 30
+71 40
+67 36
+65 38"/>
+<polyline points="101 30
+105 34"/>
+<polyline points="133 34
+135 32"/>
+<polyline points="33 34
+35 36
+37 34"/>
+<polyline points="49 38
+55 32
+61 38"/>
+<polyline points="101 34
+95 40
+93 38"/>
+<polyline points="121 38
+125 34"/>
+<polyline points="15 40
+17 42"/>
+<polyline points="29 38
+33 42"/>
+<polyline points="45 38
+55 48
+57 46"/>
+<polyline points="53 38
+59 44
+63 40
+65 42"/>
+<polyline points="101 42
+107 36
+113 42"/>
+<polyline points="117 38
+121 42"/>
+<polyline points="135 40
+131 36
+117 50"/>
+<polyline points="17 46
+21 42"/>
+<polyline points="85 42
+83 44
+79 40
+71 48
+67 44
+57 54"/>
+<polyline points="93 46
+91 44
+87 48
+85 46"/>
+<polyline points="97 42
+101 46"/>
+<polyline points="105 46
+109 42"/>
+<polyline points="117 46
+115 44
+111 48
+109 46"/>
+<polyline points="129 42
+131 44
+133 42"/>
+<polyline points="15 48
+17 50"/>
+<polyline points="25 50
+23 48
+15 56"/>
+<polyline points="41 46
+35 52
+33 50"/>
+<polyline points="45 46
+47 48
+49 46"/>
+<polyline points="77 50
+81 46"/>
+<polyline points="93 50
+97 46"/>
+<polyline points="101 50
+103 48
+107 52
+109 50"/>
+<polyline points="125 46
+127 48
+129 46"/>
+<polyline points="135 48
+131 52
+129 50"/>
+<polyline points="41 50
+45 54"/>
+<polyline points="49 50
+53 54"/>
+<polyline points="65 50
+67 52
+69 50"/>
+<polyline points="81 50
+85 54"/>
+<polyline points="89 50
+95 56
+99 52
+103 56
+105 54"/>
+<polyline points="113 50
+117 54"/>
+<polyline points="121 54
+123 52
+135 64"/>
+<polyline points="37 54
+41 58"/>
+<polyline points="49 58
+47 56
+37 66"/>
+<polyline points="53 58
+55 56
+57 58"/>
+<polyline points="61 54
+63 56
+65 54"/>
+<polyline points="69 54
+71 56
+75 52
+79 56
+81 54"/>
+<polyline points="85 58
+89 54"/>
+<polyline points="109 58
+113 54"/>
+<polyline points="133 54
+135 56"/>
+<polyline points="17 62
+27 52
+37 62"/>
+<polyline points="29 58
+15 72"/>
+<polyline points="49 62
+51 60
+53 62"/>
+<polyline points="57 62
+61 58"/>
+<polyline points="65 58
+69 62"/>
+<polyline points="73 58
+75 60
+77 58"/>
+<polyline points="81 58
+85 62"/>
+<polyline points="89 58
+91 60
+93 58"/>
+<polyline points="97 58
+99 60
+101 58"/>
+<polyline points="113 58
+115 60
+119 56
+123 60
+125 58"/>
+<polyline points="15 64
+17 66"/>
+<polyline points="33 62
+15 80"/>
+<polyline points="45 66
+47 64
+49 66"/>
+<polyline points="53 66
+55 64
+57 66"/>
+<polyline points="61 62
+73 74"/>
+<polyline points="69 66
+73 62"/>
+<polyline points="77 62
+83 68
+87 64
+89 66"/>
+<polyline points="93 62
+95 64
+97 62"/>
+<polyline points="101 62
+103 64
+107 60
+115 68
+117 66"/>
+<polyline points="117 62
+135 80"/>
+<polyline points="125 66
+129 62"/>
+<polyline points="37 70
+35 68
+27 76
+25 74"/>
+<polyline points="41 66
+45 70"/>
+<polyline points="49 70
+51 68
+53 70"/>
+<polyline points="57 70
+61 66"/>
+<polyline points="73 66
+79 72
+81 70"/>
+<polyline points="93 66
+85 74"/>
+<polyline points="97 66
+99 68
+101 66"/>
+<polyline points="105 70
+109 66"/>
+<polyline points="129 66
+135 72"/>
+<polyline points="49 74
+47 72
+43 76
+39 72
+21 90"/>
+<polyline points="53 74
+55 72
+59 76
+65 70"/>
+<polyline points="93 70
+97 74"/>
+<polyline points="101 70
+111 80
+115 76
+129 90"/>
+<polyline points="109 70
+111 72
+113 70"/>
+<polyline points="117 74
+119 72
+135 88"/>
+<polyline points="65 74
+69 78"/>
+<polyline points="73 78
+77 74"/>
+<polyline points="81 78
+83 76
+87 80
+93 74"/>
+<polyline points="97 78
+99 76
+103 80
+105 78"/>
+<polyline points="25 78
+15 88"/>
+<polyline points="41 82
+39 80
+29 90"/>
+<polyline points="57 82
+51 76
+37 90"/>
+<polyline points="65 82
+63 80
+53 90"/>
+<polyline points="81 82
+79 80
+75 84
+71 80
+63 88
+61 86"/>
+<polyline points="93 82
+95 80
+101 86"/>
+<polyline points="49 82
+51 84
+53 82"/>
+<polyline points="89 82
+97 90"/>
+<polyline points="105 82
+113 90"/>
+<polyline points="113 82
+121 90"/>
+<polyline points="45 90
+49 86"/>
+<polyline points="69 90
+73 86"/>
+<polyline points="77 90
+83 84
+87 88
+89 86"/>
+<polyline points="101 90
+105 86"/>
+</g>
+</svg>

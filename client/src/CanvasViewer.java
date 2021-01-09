@@ -116,6 +116,11 @@ public class CanvasViewer extends PApplet  {
 		slider.getControl().getValueLabel().setSize(FONT_SIZE);
 		slider.getControl().getCaptionLabel().set("Line #").setSize(FONT_SIZE).setColor(255).setPaddingX(10);
 		
+	    parseSvg();
+		ready = true;
+	}
+	
+	public void parseSvg() {
 		final Document doc;
 		try {
 		    String parser = XMLResourceDescriptor.getXMLParserClassName();
@@ -135,40 +140,41 @@ public class CanvasViewer extends PApplet  {
 			exit();
 			return;
 		}
-		
 		// See https://stackoverflow.com/questions/26027313/how-to-load-and-parse-svg-documents
 		UserAgent userAgent = new UserAgentAdapter();
 	    DocumentLoader loader = new DocumentLoader(userAgent);
 	    BridgeContext bridgeContext = new BridgeContext(userAgent, loader);
 	    bridgeContext.setDynamicState(BridgeContext.DYNAMIC);
-
 	    // Enable CSS- and SVG-specific enhancements.
 	    (new GVTBuilder()).build(bridgeContext, doc);
-		
-		Element rootElement = doc.getDocumentElement();
-		traverse(rootElement);
-
-		lines = sort(lines);
-		
-		slider.getControl().setNumberOfTickMarks(lines.size() + 1)
-			.setRange(0, lines.size())
-			.setValue(lines.size());
-		
-		SVGLength width = ((SVGOMSVGElement) rootElement).getWidth().getBaseVal();
-		width.convertToSpecifiedUnits(SVGLength.SVG_LENGTHTYPE_MM);
-		SVGLength height = ((SVGOMSVGElement) rootElement).getHeight().getBaseVal();
-		height.convertToSpecifiedUnits(SVGLength.SVG_LENGTHTYPE_MM);
-		double scale = 1;
-		double svgWidth = width.getValueInSpecifiedUnits();
-		double svgHeight = height.getValueInSpecifiedUnits();
-		if (canvasWidth > svgWidth) {
-			scale = Math.min(canvasWidth / svgWidth, canvasHeight / svgHeight);
-		} else {
-			scale = 1 / Math.min(svgWidth / canvasWidth, svgHeight / canvasHeight);
-		}
-		scaleX = scale;
-		scaleY = scale;
-		ready = true;
+	    
+	    // Needed so that draw() isn't called in the middle of updating
+	    synchronized(this) {
+		    lines = new ArrayList<>();
+			Element rootElement = doc.getDocumentElement();
+			traverse(rootElement);
+	
+			lines = sort(lines);
+			
+			slider.getControl().setNumberOfTickMarks(lines.size() + 1)
+				.setRange(0, lines.size())
+				.setValue(lines.size());
+			
+			SVGLength width = ((SVGOMSVGElement) rootElement).getWidth().getBaseVal();
+			width.convertToSpecifiedUnits(SVGLength.SVG_LENGTHTYPE_MM);
+			SVGLength height = ((SVGOMSVGElement) rootElement).getHeight().getBaseVal();
+			height.convertToSpecifiedUnits(SVGLength.SVG_LENGTHTYPE_MM);
+			double scale = 1;
+			double svgWidth = width.getValueInSpecifiedUnits();
+			double svgHeight = height.getValueInSpecifiedUnits();
+			if (canvasWidth > svgWidth) {
+				scale = Math.min(canvasWidth / svgWidth, canvasHeight / svgHeight);
+			} else {
+				scale = 1 / Math.min(svgWidth / canvasWidth, svgHeight / canvasHeight);
+			}
+			scaleX = scale;
+			scaleY = scale;
+	    }
 	}
 	
 	public boolean isReady() {
@@ -263,16 +269,16 @@ public class CanvasViewer extends PApplet  {
 		return sorted;
 	}
 	
-	private static float parseFloatOrDefault(String text, float defaultValue) {
+	private static double parseDoubleOrDefault(String text, double defaultValue) {
 		try {
-			return Float.parseFloat(text);
+			return Double.parseDouble(text);
 		} catch (NumberFormatException e) {
 			return defaultValue;
 		}
 	}
 	
 	private void canvasLine(double x1, double y1, double x2, double y2) {
-		line(canvasStart.x + x1 * canvasScale * scaleX, canvasStart.y + y1 * canvasScale * scaleY, canvasStart.x +  x2 * canvasScale * scaleX, canvasStart.y + y2 * canvasScale * scaleY);
+		line(canvasStart.x + x1 * canvasScale, canvasStart.y + y1 * canvasScale, canvasStart.x +  x2 * canvasScale, canvasStart.y + y2 * canvasScale);
 	}
 	
 	private void line(double d, double e, double f, double g) {
@@ -288,13 +294,19 @@ public class CanvasViewer extends PApplet  {
 	}
 	
 	public void draw() {
-		clear();
-		background(50, 50, 50);
-		fill(255);
-		rect(canvasStart.x, canvasStart.y, (float)(canvasStart.x + canvasWidth * canvasScale), (float)(canvasStart.y + canvasHeight * canvasScale));
-		strokeWeight((float)(lineWidth * canvasScale));
-		for (int i = 0; i < slider.getValue(); i++) {
-			drawLine(lines.get(i));
+		synchronized(this) {
+			if (lines.isEmpty()) {
+				return;
+			}
+			
+			clear();
+			background(50, 50, 50);
+			fill(255);
+			rect(canvasStart.x, canvasStart.y, (float)(canvasStart.x + canvasWidth * canvasScale), (float)(canvasStart.y + canvasHeight * canvasScale));
+			strokeWeight((float)(lineWidth * canvasScale));
+			for (int i = 0; i < slider.getValue(); i++) {
+				drawLine(lines.get(i));
+			}
 		}
 	}
 	
@@ -314,22 +326,23 @@ public class CanvasViewer extends PApplet  {
 	}
 	
 	public void setScale(String x, String y) {
-		scaleX = parseFloatOrDefault(x, 1);
-		scaleY = parseFloatOrDefault(y, 1);
+		scaleX = parseDoubleOrDefault(x, scaleX);
+		scaleY = parseDoubleOrDefault(y, scaleY);
+		parseSvg();
 		redraw();
 	}
 	
 	public void setLineWidth(String w) {
-		lineWidth = parseFloatOrDefault(w, 1);
+		lineWidth = parseDoubleOrDefault(w, 1);
 		redraw();
 	}
 	
 	public void setDrawSpeed(String speed) {
-		drawSpeed = parseFloatOrDefault(speed, 0);
+		drawSpeed = parseDoubleOrDefault(speed, 0);
 	}
 	
 	public void setTravelSpeed(String speed) {
-		travelSpeed = parseFloatOrDefault(speed, 0);
+		travelSpeed = parseDoubleOrDefault(speed, 0);
 	}
 	
 	public double getScaleX() {
@@ -409,10 +422,12 @@ public class CanvasViewer extends PApplet  {
 				for (int j = 0; j < points.size(); j++) {
 					Point machinePoint = new Point(canvasLeftX + points.get(j).x, canvasTopY + points.get(j).y);
 					if (machinePoint.x > canvasRightX || machinePoint.x < canvasLeftX) {
-						throw new IllegalArgumentException(String.format("Point X out of bounds: (%f, %f), X: %f -> %f", machinePoint.x, machinePoint.y, canvasLeftX, canvasRightX));
+						writer.close();
+						throw new IllegalArgumentException(String.format("Point X out of bounds: %s, X: %f -> %f, canvas point: %s", machinePoint, canvasLeftX, canvasRightX, points.get(j)));
 					}
 					if (machinePoint.y > canvasBottomY || machinePoint.y < canvasTopY) {
-						throw new IllegalArgumentException(String.format("Point Y out of bounds: (%f, %f),  Y: %f -> %f", machinePoint.x, machinePoint.y, canvasTopY, canvasBottomY));
+						writer.close();
+						throw new IllegalArgumentException(String.format("Point Y out of bounds: %s,  Y: %f -> %f, canvas point: %s", machinePoint, canvasTopY, canvasBottomY, points.get(j)));
 					}
 					Point beltPoint = machineToBeltPoint(machinePoint);
 					if (j == 0 && !penDown) {
