@@ -3,7 +3,9 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.TreeMap;
 
 import org.apache.batik.anim.dom.SAXSVGDocumentFactory;
 import org.apache.batik.anim.dom.SVGGraphicsElement;
@@ -64,7 +66,7 @@ public class CanvasViewer extends PApplet  {
 	private PVector canvasStart = new PVector(CANVAS_MARGIN, CANVAS_MARGIN);
 	private float canvasScale = 1;
 	
-	private final List<List<Point>> lines = new ArrayList<>();
+	private List<List<Point>> lines = new ArrayList<>();
 	
 	private int prevSliderValue = 0;
 	
@@ -119,7 +121,7 @@ public class CanvasViewer extends PApplet  {
 		    String parser = XMLResourceDescriptor.getXMLParserClassName();
 		    SAXSVGDocumentFactory f = new SAXSVGDocumentFactory(parser);
 		    // TODO: add a file picker!
-		    //doc = f.createDocument("example.svg");
+		    doc = f.createDocument("example.svg");
 		    //doc = f.createDocument("torus.svg");
 		    //doc = f.createDocument("squares.svg");
 		    //doc = f.createDocument("cal.svg");
@@ -127,7 +129,7 @@ public class CanvasViewer extends PApplet  {
 		    //doc = f.createDocument("small-torus.svg");
 		    //doc = f.createDocument("maze.svg");
 		    //doc = f.createDocument("truchet.svg");
-		    doc = f.createDocument("sin.svg");
+		    //doc = f.createDocument("sin.svg");
 		} catch (IOException ex) {
 			ex.printStackTrace();
 			exit();
@@ -145,8 +147,8 @@ public class CanvasViewer extends PApplet  {
 		
 		Element rootElement = doc.getDocumentElement();
 		traverse(rootElement);
-		
-		//svgGraphics.sort(Comparator.<SVGGraphicsElement>comparingDouble(CanvasViewer::svgLength).reversed());
+
+		lines = sort(lines);
 		
 		slider.getControl().setNumberOfTickMarks(lines.size() + 1)
 			.setRange(0, lines.size())
@@ -188,6 +190,77 @@ public class CanvasViewer extends PApplet  {
 				traverse((Element) child);
 			}
 		}
+	}
+	
+	private static List<List<Point>> sort(List<List<Point>> lines) {
+		List<List<Point>> sorted = new ArrayList<>();
+		List<List<Point>> startXSorted = new ArrayList<>();
+		startXSorted.addAll(lines);
+		startXSorted.sort((line1, line2) -> {
+			if (line1.isEmpty()) {
+				return 1;
+			}
+			if (line2.isEmpty()) {
+				return -1;
+			}
+			
+			return Double.compare(line1.get(0).x, line2.get(0).x); 
+		});
+		List<List<Point>> endXSorted = new ArrayList<>();
+		endXSorted.addAll(lines);
+		endXSorted.sort((line1, line2) -> {
+			if (line1.isEmpty()) {
+				return 1;
+			}
+			if (line2.isEmpty()) {
+				return -1;
+			}
+			
+			return Double.compare(line1.get(line1.size() - 1).x, line2.get(line2.size() - 1).x); 
+		});
+		
+		List<Point> line = startXSorted.remove(0);
+		endXSorted.remove(line);
+		while (!startXSorted.isEmpty()) {
+			sorted.add(line);
+			double shortestDistance = Double.MAX_VALUE;
+			List<Point> shortestNext = null;
+			boolean reverse = false;
+			for (List<Point> maybeNextLine : startXSorted) {
+				Point start = line.get(0);
+				double distance = start.distanceTo(maybeNextLine.get(0));
+				if (distance < shortestDistance) {
+					shortestDistance = distance;
+					shortestNext = maybeNextLine;
+				}
+				if (maybeNextLine.get(0).x - start.x > shortestDistance) {
+					break;
+				}
+			}
+			for (List<Point> maybeNextLine : endXSorted) {
+				Point start = line.get(line.size() - 1);
+				double distance = start.distanceTo(maybeNextLine.get(0));
+				if (distance < shortestDistance) {
+					shortestDistance = distance;
+					shortestNext = maybeNextLine;
+					reverse = true;
+				}
+				if (maybeNextLine.get(0).x - start.x > shortestDistance) {
+					break;
+				}
+			}
+			
+			startXSorted.remove(shortestNext);
+			endXSorted.remove(shortestNext);
+			if (reverse) {
+				Collections.reverse(shortestNext);
+			}
+			sorted.add(shortestNext);
+		}
+		
+		sorted.add(line);
+ 		
+		return sorted;
 	}
 	
 	private static float parseFloatOrDefault(String text, float defaultValue) {
@@ -268,11 +341,11 @@ public class CanvasViewer extends PApplet  {
 	}
 	
 	private String penDownGcode() {
-		return String.format("G01 F%f Z%f ; Pen down\nG04 P0.2 ; Delay for 0.2s\n", 500.0, -3.4);
+		return String.format("G01 F%f Z%f ; Pen down\nG04 P0.2 ; Delay for 0.2s\n", 500.0, -3.3);
 	}
 	
 	private String penUpGcode() {
-		return String.format("G01 F%f Z%f ; Pen up\n", 500.0, -8.0);
+		return String.format("G01 F%f Z%f ; Pen up\n", 500.0, -7.0);
 	}
 		
 	private List<Point> pathToPoints(SVGOMPathElement path) {
