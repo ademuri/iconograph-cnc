@@ -235,8 +235,8 @@ public class CanvasViewer extends PApplet  {
 			double shortestDistance = Double.MAX_VALUE;
 			List<Point> shortestNext = null;
 			boolean reverse = false;
+			Point start = line.get(line.size() - 1);
 			for (List<Point> maybeNextLine : startXSorted) {
-				Point start = line.get(0);
 				double distance = start.distanceTo(maybeNextLine.get(0));
 				if (distance < shortestDistance) {
 					shortestDistance = distance;
@@ -247,12 +247,12 @@ public class CanvasViewer extends PApplet  {
 				}
 			}
 			for (List<Point> maybeNextLine : endXSorted) {
-				Point start = line.get(line.size() - 1);
-				double distance = start.distanceTo(maybeNextLine.get(0));
+				double distance = start.distanceTo(maybeNextLine.get(maybeNextLine.size() - 1));
 				if (distance < shortestDistance) {
 					shortestDistance = distance;
 					shortestNext = maybeNextLine;
 					reverse = true;
+					System.out.println("next reversed");
 				}
 				if (maybeNextLine.get(0).x - start.x > shortestDistance) {
 					break;
