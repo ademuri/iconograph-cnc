@@ -59,12 +59,12 @@ public class CanvasViewer extends PApplet  {
 	private static final double MM_PER_INCH = 25.4;
 	//private static final double canvasWidth = 18 * MM_PER_INCH;
 	private static final double canvasWidth = 15 * MM_PER_INCH;
-	private static final double canvasHeight = 11 * MM_PER_INCH;
+	private static final double canvasHeight = 10 * MM_PER_INCH;
 	private static final double machineWidth = 43 * MM_PER_INCH;
 	private static final double machineHeight = 24.5 * MM_PER_INCH;
 	private static final double canvasLeftX = (machineWidth - canvasWidth) / 2;
 	private static final double canvasRightX = canvasLeftX + canvasWidth;
-	private static final double canvasTopY = machineHeight - canvasHeight - 6 * MM_PER_INCH;
+	private static final double canvasTopY = machineHeight - canvasHeight - 7 * MM_PER_INCH;
 	private static final double canvasBottomY = machineHeight - 3 * MM_PER_INCH;
 	
 	private final double maxLineSegmentLength = 2;
@@ -72,7 +72,7 @@ public class CanvasViewer extends PApplet  {
 	private static final Point homingLR = new Point(923, 918);
 	
 	// Where the carriage should go after drawing
-	private static final Point finalPosition = new Point(canvasRightX + 2 * MM_PER_INCH, canvasTopY);
+	private static final Point finalPosition = new Point(canvasRightX, canvasTopY);
 	
 	private PVector canvasStart = new PVector(CANVAS_MARGIN, CANVAS_MARGIN);
 	private float canvasScale = 1;
@@ -131,11 +131,16 @@ public class CanvasViewer extends PApplet  {
 		try {
 		    String parser = XMLResourceDescriptor.getXMLParserClassName();
 		    SAXSVGDocumentFactory f = new SAXSVGDocumentFactory(parser);
-		     doc = f.createDocument("example.svg");
-		     //doc = f.createDocument("torus.svg");
+		    // TODO: add a file picker!
+		    //doc = f.createDocument("example.svg");
+		    //doc = f.createDocument("torus.svg");
 		    //doc = f.createDocument("squares.svg");
 		    //doc = f.createDocument("cal.svg");
 		    //doc = f.createDocument("lines.svg");
+		    //doc = f.createDocument("small-torus.svg");
+		    //doc = f.createDocument("maze.svg");
+		    //doc = f.createDocument("truchet.svg");
+		    doc = f.createDocument("sin.svg");
 		} catch (IOException ex) {
 			ex.printStackTrace();
 			exit();
@@ -154,7 +159,7 @@ public class CanvasViewer extends PApplet  {
 		Element rootElement = doc.getDocumentElement();
 		traverse(rootElement);
 		
-		svgGraphics.sort(Comparator.<SVGGraphicsElement>comparingDouble(CanvasViewer::svgLength).reversed());
+		//svgGraphics.sort(Comparator.<SVGGraphicsElement>comparingDouble(CanvasViewer::svgLength).reversed());
 		
 		slider.getControl().setNumberOfTickMarks(svgGraphics.size() + 1)
 			.setRange(0, svgGraphics.size())
@@ -308,7 +313,7 @@ public class CanvasViewer extends PApplet  {
 	}
 	
 	private String penDownGcode() {
-		return String.format("G01 F%f Z%f ; Pen down\nG04 P1 ; Delay for 1s\n", 500.0, -3.0);
+		return String.format("G01 F%f Z%f ; Pen down\nG04 P0.2 ; Delay for 0.2s\n", 500.0, -3.4);
 	}
 	
 	private String penUpGcode() {
