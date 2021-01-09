@@ -126,9 +126,9 @@ public class CanvasViewer extends PApplet  {
 		    String parser = XMLResourceDescriptor.getXMLParserClassName();
 		    SAXSVGDocumentFactory f = new SAXSVGDocumentFactory(parser);
 		    // TODO: add a file picker!
-		    doc = f.createDocument("example.svg");
+		    //doc = f.createDocument("example.svg");
 		    //doc = f.createDocument("torus.svg");
-		    //doc = f.createDocument("squares.svg");
+		    doc = f.createDocument("squares.svg");
 		    //doc = f.createDocument("cal.svg");
 		    //doc = f.createDocument("lines.svg");
 		    //doc = f.createDocument("small-torus.svg");
@@ -152,14 +152,6 @@ public class CanvasViewer extends PApplet  {
 	    synchronized(this) {
 		    lines = new ArrayList<>();
 			Element rootElement = doc.getDocumentElement();
-			traverse(rootElement);
-	
-			lines = sort(lines);
-			
-			slider.getControl().setNumberOfTickMarks(lines.size() + 1)
-				.setRange(0, lines.size())
-				.setValue(lines.size());
-			
 			SVGLength width = ((SVGOMSVGElement) rootElement).getWidth().getBaseVal();
 			width.convertToSpecifiedUnits(SVGLength.SVG_LENGTHTYPE_MM);
 			SVGLength height = ((SVGOMSVGElement) rootElement).getHeight().getBaseVal();
@@ -174,6 +166,14 @@ public class CanvasViewer extends PApplet  {
 			}
 			scaleX = scale;
 			scaleY = scale;
+			
+			traverse(rootElement);
+	
+			lines = sort(lines);
+			
+			slider.getControl().setNumberOfTickMarks(lines.size() + 1)
+				.setRange(0, lines.size())
+				.setValue(lines.size());
 	    }
 	}
 	
@@ -227,8 +227,8 @@ public class CanvasViewer extends PApplet  {
 		
 		List<Point> line = startXSorted.remove(0);
 		endXSorted.remove(line);
+		sorted.add(line);
 		while (!startXSorted.isEmpty()) {
-			sorted.add(line);
 			double shortestDistance = Double.MAX_VALUE;
 			List<Point> shortestNext = null;
 			boolean reverse = false;
@@ -262,10 +262,9 @@ public class CanvasViewer extends PApplet  {
 				Collections.reverse(shortestNext);
 			}
 			sorted.add(shortestNext);
+			line = shortestNext;
 		}
 		
-		sorted.add(line);
- 		
 		return sorted;
 	}
 	
