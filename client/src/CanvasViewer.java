@@ -47,7 +47,7 @@ public class CanvasViewer extends PApplet  {
 	// Note: all physical distances are in millimeters
 	private static final double MM_PER_INCH = 25.4;
 	//private static final double canvasWidth = 18 * MM_PER_INCH;
-	private static final double canvasWidth = 15 * MM_PER_INCH;
+	private static final double canvasWidth = 15.5 * MM_PER_INCH;
 	private static final double canvasHeight = 10 * MM_PER_INCH;
 	private static final double machineWidth = 43 * MM_PER_INCH;
 	private static final double machineHeight = 24.5 * MM_PER_INCH;
@@ -122,16 +122,6 @@ public class CanvasViewer extends PApplet  {
 		try {
 		    String parser = XMLResourceDescriptor.getXMLParserClassName();
 		    SAXSVGDocumentFactory f = new SAXSVGDocumentFactory(parser);
-		    // TODO: add a file picker!
-		    //doc = f.createDocument("example.svg");
-		    //doc = f.createDocument("torus.svg");
-		    //doc = f.createDocument("squares.svg");
-		    //doc = f.createDocument("cal.svg");
-		    //doc = f.createDocument("lines.svg");
-		    //doc = f.createDocument("small-torus.svg");
-		    //doc = f.createDocument("maze.svg");
-		    //doc = f.createDocument("truchet.svg");
-		    //doc = f.createDocument("sin.svg");
 		    doc = f.createDocument(filename);
 		} catch (IOException ex) {
 			ex.printStackTrace();
@@ -173,8 +163,46 @@ public class CanvasViewer extends PApplet  {
 	public void scaleFromSvg() {
 		synchronized(this) {
 			lines = new ArrayList<>();
+      // Prime line
+      ArrayList<Point> primeLine = new ArrayList<>();
+      primeLine.add(new Point(0, 0));
+      primeLine.add(new Point(50, 0));
+      primeLine.add(new Point(0, 0));
+      primeLine.add(new Point(50, 0));
+      lines.add(primeLine);
+
 			traverse(svgRootElement);
 			lines = sort(lines);
+    }
+  }
+
+	private void createCalibration() {
+		synchronized(this) {
+			lines = new ArrayList<>();
+			List<Point> boundPoints = List.of(new Point(0, 0), new Point(canvasWidth, 0), new Point(canvasWidth, canvasHeight), new Point(0, canvasHeight), new Point(0, 0));
+			List<Point> boundPointsInterpolated = new ArrayList<>();
+			for (int i = 1; i < boundPoints.size(); i++) {
+				Point prevBound = boundPoints.get(i - 1);
+				Point curBound = boundPoints.get(i);
+				for (double j = 0; j <= 1; j += .01) {
+					 boundPointsInterpolated.add(new Point(prevBound.x + (curBound.x - prevBound.x) * j, prevBound.y + (curBound.y - prevBound.y) * j));
+				}
+			}
+			lines.add(boundPointsInterpolated);
+			double xStep = canvasWidth / 20;
+			double yStep = canvasHeight / 20;
+			double length = .5;
+			for (double x = xStep / 2; x < canvasWidth; x += xStep) {
+				for (double y = yStep / 2; y < canvasHeight; y += yStep) {
+					lines.add(new ArrayList<>(List.of(new Point(x - length / 2, y), new Point(x + length / 2, y))));
+					//lines.add(new ArrayList<>(List.of(new Point(x, y - length / 2), new Point(x, y + length / 2))));
+				}
+			}
+			//lines.add(new ArrayList<>(List.of(new Point(0, 0), new Point(canvasWidth, 0), new Point(canvasWidth, canvasHeight), new Point(0, canvasHeight), new Point(0, 0))));
+			slider.getControl().setNumberOfTickMarks(lines.size() + 1)
+			.setRange(0, lines.size())
+			.setValue(lines.size());
+>>>>>>> 42782b6... Fix short line bug
 		}
 	}
 	
@@ -246,7 +274,6 @@ public class CanvasViewer extends PApplet  {
 					shortestDistance = distance;
 					shortestNext = maybeNextLine;
 					reverse = true;
-					System.out.println("next reversed");
 				}
 				if (maybeNextLine.get(0).x - start.x > shortestDistance) {
 					break;
@@ -350,11 +377,11 @@ public class CanvasViewer extends PApplet  {
 	}
 	
 	private String penDownGcode() {
-		return String.format("G01 F%f Z%f ; Pen down\nG04 P0.2 ; Delay for 0.2s\n", 500.0, -3.3);
+		return String.format("G01 F%f Z%f ; Pen down\nG04 P0.1 ; Delay for 0.1s\n", 500.0, -0.8);
 	}
 	
 	private String penUpGcode() {
-		return String.format("G01 F%f Z%f ; Pen up\n", 500.0, -7.0);
+		return String.format("G01 F%f Z%f ; Pen up\n", 500.0, -2.0);
 	}
 		
 	private List<Point> pathToPoints(SVGOMPathElement path) {
@@ -384,6 +411,9 @@ public class CanvasViewer extends PApplet  {
 				double yDelta = point.y - prevPoint.y;
 				double length = Math.sqrt(Math.pow(xDelta, 2) + Math.pow(yDelta, 2));
 				double steps = Math.ceil(length / maxLineSegmentLength);
+				if (steps < 2) {
+					steps = 2;
+				}
 				for (int step = 1; step < steps; step++) {
 					Point interpolatedPoint = new Point(prevPoint.x + xDelta * step / steps, prevPoint.y + yDelta * step / steps);
 					points.add(interpolatedPoint);
@@ -427,11 +457,11 @@ public class CanvasViewer extends PApplet  {
 					}
 					Point beltPoint = machineToBeltPoint(machinePoint);
 					if (j == 0 && !penDown) {
-						writer.append(String.format("G01 F%f X%f Y%f\n", travelSpeed, beltPoint.x, beltPoint.y));
+						writer.append(String.format("G01 F%f X%.3f Y%.3f\n", travelSpeed, beltPoint.x, beltPoint.y));
 						writer.append(penDownGcode());
 						penDown = true;
 					} else {
-						writer.append(String.format("G01 F%f X%f Y%f\n", drawSpeed, beltPoint.x, beltPoint.y));
+						writer.append(String.format("G01 F%f X%.3f Y%.3f\n", drawSpeed, beltPoint.x, beltPoint.y));
 					}
 				}
 				if (i < lines.size() - 1) {
@@ -454,7 +484,7 @@ public class CanvasViewer extends PApplet  {
 			writer.append("\n; Final position\n");
 			writer.append(penUpGcode());
 			Point finalPositionBelt = machineToBeltPoint(finalPosition);
-			writer.append(String.format("G01 F%f X%f Y%f\n", travelSpeed, finalPositionBelt.x, finalPositionBelt.y));
+			writer.append(String.format("G01 F%f X%.3f Y%.3f\n", travelSpeed, finalPositionBelt.x, finalPositionBelt.y));
 			writer.close();
 		} catch (IOException e) {
 			e.printStackTrace();
