@@ -1,4 +1,7 @@
 import java.awt.BorderLayout;
+import java.awt.Component;
+import java.awt.Container;
+import java.awt.Dimension;
 import java.awt.EventQueue;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
@@ -6,6 +9,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.prefs.Preferences;
 
 import javax.swing.JFrame;
 import javax.swing.JPanel;
@@ -29,6 +33,7 @@ import java.awt.Font;
 import java.awt.GraphicsConfiguration;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
+import javax.swing.JFileChooser;
 
 import org.ini4j.Ini;
 import org.ini4j.InvalidFileFormatException;
@@ -37,6 +42,7 @@ import org.ini4j.Profile.Section;
 public class OptionsWindow extends JFrame implements KeyListener {
 	private static final String CONFIG_FILE = "config.ini";
 	private static final String SECTION_SPEEDS = "speeds";
+	private static final String LAST_DIR_SVG = "LAST_DIR_SVG";
 
 	private final CanvasViewer canvasViewer;
 	private JPanel contentPane;
@@ -61,6 +67,10 @@ public class OptionsWindow extends JFrame implements KeyListener {
 	private JLabel lblNewLabel_4;
 	private JPanel panel_5;
 	private JButton generateGcode;
+	private JPanel panel_6;
+	private JButton btnLoadSvg;
+	
+	private final JFileChooser fileChooser = new JFileChooser();
 
 	/**
 	 * Create the frame.
@@ -123,10 +133,8 @@ public class OptionsWindow extends JFrame implements KeyListener {
 		lblNewLabel_1.setLabelFor(scaleY);
 		
 		panel_2 = new JPanel();
-		contentPane.setLayout(new FlowLayout(FlowLayout.CENTER, 5, 5));
-		contentPane.add(panel);
-		contentPane.add(panel_1);
-		contentPane.add(panel_2);
+		
+		panel_6 = new JPanel();
 		
 		drawSpeed = new JTextField();
 		drawSpeed.setFont(new Font("Dialog", Font.PLAIN, getTextSize()));
@@ -140,7 +148,6 @@ public class OptionsWindow extends JFrame implements KeyListener {
 		panel_2.add(lblNewLabel_2);
 		
 		panel_3 = new JPanel();
-		contentPane.add(panel_3);
 		
 		travelSpeed = new JTextField();
 		travelSpeed.setFont(new Font("Dialog", Font.PLAIN, getTextSize()));
@@ -154,7 +161,6 @@ public class OptionsWindow extends JFrame implements KeyListener {
 		panel_3.add(lblNewLabel_3);
 		
 		panel_4 = new JPanel();
-		contentPane.add(panel_4);
 		
 		lineWidth = new JTextField();
 		lineWidth.setText("2");
@@ -168,7 +174,6 @@ public class OptionsWindow extends JFrame implements KeyListener {
 		panel_4.add(lblNewLabel_4);
 		
 		panel_5 = new JPanel();
-		contentPane.add(panel_5);
 		
 		generateGcode = new JButton("Generate G-Code");
 		generateGcode.setFont(new Font("Dialog", Font.PLAIN, getTextSize()));
@@ -177,6 +182,29 @@ public class OptionsWindow extends JFrame implements KeyListener {
 			doGenerateGcode();
 		});
 		panel_5.add(generateGcode);
+		contentPane.setLayout(new BoxLayout(contentPane, BoxLayout.Y_AXIS));
+		
+		btnLoadSvg = new JButton("Load SVG");
+		btnLoadSvg.setFont(new Font("Dialog", Font.PLAIN, getTextSize()));
+		btnLoadSvg.addActionListener(event -> {
+			setFontSize(fileChooser.getComponents());
+			fileChooser.setPreferredSize(new Dimension(getProcessingWidth(), getProcessingHeight()));
+			int r = fileChooser.showOpenDialog(this);
+			if (r == JFileChooser.APPROVE_OPTION) {
+				canvasViewer.loadSvg(fileChooser.getSelectedFile().getAbsolutePath());
+				Preferences prefs = Preferences.userRoot().node(getClass().getName());
+				prefs.put(LAST_DIR_SVG, fileChooser.getSelectedFile().getAbsolutePath());
+			}
+		});
+		panel_6.add(btnLoadSvg);
+		
+		contentPane.add(panel_6);
+		contentPane.add(panel);
+		contentPane.add(panel_1);
+		contentPane.add(panel_2);
+		contentPane.add(panel_3);
+		contentPane.add(panel_4);
+		contentPane.add(panel_5);
 		addKeyListener(this);
 		setLocationRight();
 
@@ -189,6 +217,20 @@ public class OptionsWindow extends JFrame implements KeyListener {
 	    upperBound = bounds.y + insets.top;
 	    
 	    setLineWidth();
+	    
+	    Preferences prefs = Preferences.userRoot().node(getClass().getName());
+	    if (!prefs.get(LAST_DIR_SVG, "").isEmpty()) {
+	    	fileChooser.setCurrentDirectory(new File(prefs.get(LAST_DIR_SVG, "")));
+	    }
+	}
+	
+	private void setFontSize(Component[] components) {
+		for (Component component : components) {
+			if (component instanceof Container) {
+				setFontSize(((Container) component).getComponents());
+			}
+			component.setFont(new Font("Dialog", Font.PLAIN, getTextSize()));
+		}
 	}
 	
 	private void tryStoreIni() {

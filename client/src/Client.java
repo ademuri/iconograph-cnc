@@ -14,9 +14,6 @@ public class Client  {
 		
 		PApplet.runSketch(processingArgs, canvasViewer);
 		canvasViewer.setLocation(optionsWindow.getLeftBound(), optionsWindow.getUpperBound());
-		while (!canvasViewer.isReady()) {
-			Thread.sleep(100);
-		}
 		optionsWindow.init();
 		optionsWindow.setVisible(true);
 	}

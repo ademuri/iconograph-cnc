@@ -75,9 +75,9 @@ public class CanvasViewer extends PApplet  {
 	private double scaleX = 1;
 	private double scaleY = 1;
 	private double lineWidth = 1;
-	private boolean ready = false;
 	private double drawSpeed = 0;
 	private double travelSpeed = 0;
+	private Element svgRootElement;
 	
 	public void setSize(int width, int height) {
 		windowX = width;
@@ -115,18 +115,15 @@ public class CanvasViewer extends PApplet  {
 		
 		slider.getControl().getValueLabel().setSize(FONT_SIZE);
 		slider.getControl().getCaptionLabel().set("Line #").setSize(FONT_SIZE).setColor(255).setPaddingX(10);
-		
-	    parseSvg();
-		ready = true;
 	}
 	
-	public void parseSvg() {
+	public void loadSvg(String filename) {
 		final Document doc;
 		try {
 		    String parser = XMLResourceDescriptor.getXMLParserClassName();
 		    SAXSVGDocumentFactory f = new SAXSVGDocumentFactory(parser);
 		    // TODO: add a file picker!
-		    doc = f.createDocument("example.svg");
+		    //doc = f.createDocument("example.svg");
 		    //doc = f.createDocument("torus.svg");
 		    //doc = f.createDocument("squares.svg");
 		    //doc = f.createDocument("cal.svg");
@@ -135,6 +132,7 @@ public class CanvasViewer extends PApplet  {
 		    //doc = f.createDocument("maze.svg");
 		    //doc = f.createDocument("truchet.svg");
 		    //doc = f.createDocument("sin.svg");
+		    doc = f.createDocument(filename);
 		} catch (IOException ex) {
 			ex.printStackTrace();
 			exit();
@@ -149,39 +147,35 @@ public class CanvasViewer extends PApplet  {
 	    (new GVTBuilder()).build(bridgeContext, doc);
 	    
 	    // Needed so that draw() isn't called in the middle of updating
-	    synchronized(this) {
-		    lines = new ArrayList<>();
-			Element rootElement = doc.getDocumentElement();
-			SVGLength width = ((SVGOMSVGElement) rootElement).getWidth().getBaseVal();
-			width.convertToSpecifiedUnits(SVGLength.SVG_LENGTHTYPE_MM);
-			SVGLength height = ((SVGOMSVGElement) rootElement).getHeight().getBaseVal();
-			height.convertToSpecifiedUnits(SVGLength.SVG_LENGTHTYPE_MM);
-			
-			if (!ready) {
-				double scale = 1;
-				double svgWidth = width.getValueInSpecifiedUnits();
-				double svgHeight = height.getValueInSpecifiedUnits();
-				if (canvasWidth > svgWidth) {
-					scale = Math.min(canvasWidth / svgWidth, canvasHeight / svgHeight);
-				} else {
-					scale = 1 / Math.min(svgWidth / canvasWidth, svgHeight / canvasHeight);
-				}
-				scaleX = scale;
-				scaleY = scale;
-			}
-			
-			traverse(rootElement);
-	
-			lines = sort(lines);
-			
-			slider.getControl().setNumberOfTickMarks(lines.size() + 1)
-				.setRange(0, lines.size())
-				.setValue(lines.size());
-	    }
+	    svgRootElement = doc.getDocumentElement();
+		SVGLength width = ((SVGOMSVGElement) svgRootElement).getWidth().getBaseVal();
+		width.convertToSpecifiedUnits(SVGLength.SVG_LENGTHTYPE_MM);
+		SVGLength height = ((SVGOMSVGElement) svgRootElement).getHeight().getBaseVal();
+		height.convertToSpecifiedUnits(SVGLength.SVG_LENGTHTYPE_MM);
+		
+		double scale = 1;
+		double svgWidth = width.getValueInSpecifiedUnits();
+		double svgHeight = height.getValueInSpecifiedUnits();
+		if (canvasWidth > svgWidth) {
+			scale = Math.min(canvasWidth / svgWidth, canvasHeight / svgHeight);
+		} else {
+			scale = 1 / Math.min(svgWidth / canvasWidth, svgHeight / canvasHeight);
+		}
+		scaleX = scale;
+		scaleY = scale;
+	    
+	    scaleFromSvg();
+	    slider.getControl().setNumberOfTickMarks(lines.size() + 1)
+			.setRange(0, lines.size() + 1)
+			.setValue(lines.size());
 	}
 	
-	public boolean isReady() {
-		return ready;
+	public void scaleFromSvg() {
+		synchronized(this) {
+			lines = new ArrayList<>();
+			traverse(svgRootElement);
+			lines = sort(lines);
+		}
 	}
 	
 	private void traverse(Element element) {
@@ -330,7 +324,7 @@ public class CanvasViewer extends PApplet  {
 	public void setScale(String x, String y) {
 		scaleX = parseDoubleOrDefault(x, scaleX);
 		scaleY = parseDoubleOrDefault(y, scaleY);
-		parseSvg();
+		scaleFromSvg();
 		redraw();
 	}
 	
