@@ -312,7 +312,9 @@ public class CanvasViewer extends PApplet  {
 		for (int i = 1; i < line.size(); i++) {
 			Point prevPoint = line.get(i - 1);
 			Point point = line.get(i);
-			canvasLine(prevPoint.x, prevPoint.y, point.x, point.y);
+			if (prevPoint.x >= 0 && prevPoint.x <= canvasWidth && prevPoint.y >= 0 && prevPoint.y <= canvasHeight) {
+				canvasLine(prevPoint.x, prevPoint.y, point.x, point.y);
+			}
 		}
 	}
 	
@@ -448,20 +450,26 @@ public class CanvasViewer extends PApplet  {
 				for (int j = 0; j < points.size(); j++) {
 					Point machinePoint = new Point(canvasLeftX + points.get(j).x, canvasTopY + points.get(j).y);
 					if (machinePoint.x > canvasRightX || machinePoint.x < canvasLeftX) {
-						writer.close();
-						throw new IllegalArgumentException(String.format("Point X out of bounds: %s, X: %f -> %f, canvas point: %s", machinePoint, canvasLeftX, canvasRightX, points.get(j)));
-					}
-					if (machinePoint.y > canvasBottomY || machinePoint.y < canvasTopY) {
-						writer.close();
-						throw new IllegalArgumentException(String.format("Point Y out of bounds: %s,  Y: %f -> %f, canvas point: %s", machinePoint, canvasTopY, canvasBottomY, points.get(j)));
-					}
-					Point beltPoint = machineToBeltPoint(machinePoint);
-					if (j == 0 && !penDown) {
-						writer.append(String.format("G01 F%f X%.3f Y%.3f\n", travelSpeed, beltPoint.x, beltPoint.y));
-						writer.append(penDownGcode());
-						penDown = true;
+						System.err.format("Point X out of bounds: %s, X: %f -> %f, canvas point: %s\n", machinePoint, canvasLeftX, canvasRightX, points.get(j));
+						if (penDown) {
+							writer.append(penUpGcode());
+							penDown  = false;
+						}
+					} else if (machinePoint.y > canvasBottomY || machinePoint.y < canvasTopY) {
+						System.err.format("Point Y out of bounds: %s,  Y: %f -> %f, canvas point: %s\n", machinePoint, canvasTopY, canvasBottomY, points.get(j));
+						if (penDown) {
+							writer.append(penUpGcode());
+							penDown  = false;
+						}
 					} else {
-						writer.append(String.format("G01 F%f X%.3f Y%.3f\n", drawSpeed, beltPoint.x, beltPoint.y));
+						Point beltPoint = machineToBeltPoint(machinePoint);
+						if (!penDown) {
+							writer.append(String.format("G01 F%f X%.3f Y%.3f\n", travelSpeed, beltPoint.x, beltPoint.y));
+							writer.append(penDownGcode());
+							penDown = true;
+						} else {
+							writer.append(String.format("G01 F%f X%.3f Y%.3f\n", drawSpeed, beltPoint.x, beltPoint.y));
+						}
 					}
 				}
 				if (i < lines.size() - 1) {
