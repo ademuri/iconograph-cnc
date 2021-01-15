@@ -15,7 +15,7 @@ public class TextInput extends JPanel {
 		add(input);
 
 		label = new JLabel();
-		label.setFont(font);
+		label.setFont(new Font(font.getName(), Font.BOLD, font.getSize()));
 		label.setLabelFor(input);
 		label.setText(name);
 		add(label);

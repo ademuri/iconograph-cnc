@@ -38,7 +38,7 @@ public class OptionsWindow extends JFrame implements KeyListener {
 	private final CanvasViewer canvasViewer;
 	private JPanel contentPane;
 	private TextInput scaleX;
-	private JTextField scaleY;
+	private TextInput scaleY;
 
 	private final int processingWidth;
 	private final int processingHeight;
@@ -46,15 +46,9 @@ public class OptionsWindow extends JFrame implements KeyListener {
 	private final int upperBound;
 	private final double monitorScale;
 	private final Ini ini;
-	private JPanel panel_2;
-	private JTextField drawSpeed;
-	private JLabel lblNewLabel_2;
-	private JPanel panel_3;
-	private JTextField travelSpeed;
-	private JLabel lblNewLabel_3;
-	private JPanel panel_4;
-	private JTextField lineWidth;
-	private JLabel lblNewLabel_4;
+	private TextInput drawSpeed;
+	private TextInput travelSpeed;
+	private TextInput lineWidth;
 	private JPanel panel_5;
 	private JButton generateGcode;
 	private JPanel panel_6;
@@ -89,7 +83,7 @@ public class OptionsWindow extends JFrame implements KeyListener {
 		Font defaultFont = new Font("Dialog", Font.PLAIN, getTextSize());
 
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		setBounds(100, 100, (int) (450 * monitorScale), (int) (300 * monitorScale));
+		setBounds(100, 100, (int) (450 * monitorScale), (int) (400 * monitorScale));
 		contentPane = new JPanel();
 		contentPane.setBorder(new EmptyBorder(5, 5, 5, 5));
 		setContentPane(contentPane);
@@ -120,11 +114,8 @@ public class OptionsWindow extends JFrame implements KeyListener {
 		});
 		panel_6.add(btnLoadSvg);
 
-		JPanel panel = new JPanel();
-		drawingPanel.add(panel);
-
 		scaleX = new TextInput("Scale X", defaultFont);
-		scaleX.addFocusListener(new FocusAdapter() {
+		scaleX.getInput().addFocusListener(new FocusAdapter() {
 			@Override
 			public void focusLost(FocusEvent e) {
 				setScale();
@@ -132,67 +123,29 @@ public class OptionsWindow extends JFrame implements KeyListener {
 		});
 		drawingPanel.add(scaleX);
 
-		JPanel panel_1 = new JPanel();
-		drawingPanel.add(panel_1);
-
-		scaleY = new JTextField();
-		scaleY.setFont(defaultFont);
-		scaleY.addKeyListener(this);
-		scaleY.addFocusListener(new FocusAdapter() {
+		scaleY = new TextInput("Scale Y", defaultFont);
+		scaleY.getInput().addFocusListener(new FocusAdapter() {
 			@Override
 			public void focusLost(FocusEvent e) {
 				setScale();
 			}
 		});
-		panel_1.add(scaleY);
-		scaleY.setColumns(10);
+		drawingPanel.add(scaleY);
 
-		JLabel lblNewLabel_1 = new JLabel("Scale Y");
-		lblNewLabel_1.setFont(new Font("Dialog", Font.BOLD, getTextSize()));
-		panel_1.add(lblNewLabel_1);
-		lblNewLabel_1.setLabelFor(scaleY);
+		drawSpeed = new TextInput("Draw Speed", defaultFont);
+		drawSpeed.getInput().addKeyListener(this);
+		drawSpeed.getInput().setText(speedConfig.getOrDefault("draw_speed", "2000"));
+		drawingPanel.add(drawSpeed);
 
-		panel_2 = new JPanel();
-		drawingPanel.add(panel_2);
+		travelSpeed = new TextInput("Travel Speed", defaultFont);
+		travelSpeed.getInput().addKeyListener(this);
+		travelSpeed.getInput().setText(speedConfig.getOrDefault("travel_speed", "2000"));
+		drawingPanel.add(travelSpeed);
 
-		drawSpeed = new JTextField();
-		drawSpeed.setFont(defaultFont);
-		drawSpeed.setText(speedConfig.getOrDefault("draw_speed", "2000"));
-		drawSpeed.setColumns(10);
-		drawSpeed.addKeyListener(this);
-		panel_2.add(drawSpeed);
-
-		lblNewLabel_2 = new JLabel("Draw Speed");
-		lblNewLabel_2.setFont(new Font("Dialog", Font.BOLD, getTextSize()));
-		panel_2.add(lblNewLabel_2);
-
-		panel_3 = new JPanel();
-		drawingPanel.add(panel_3);
-
-		travelSpeed = new JTextField();
-		travelSpeed.setFont(defaultFont);
-		travelSpeed.setText(speedConfig.getOrDefault("travel_speed", "2000"));
-		travelSpeed.setColumns(10);
-		travelSpeed.addKeyListener(this);
-		panel_3.add(travelSpeed);
-
-		lblNewLabel_3 = new JLabel("Travel Speed");
-		lblNewLabel_3.setFont(new Font("Dialog", Font.BOLD, getTextSize()));
-		panel_3.add(lblNewLabel_3);
-
-		panel_4 = new JPanel();
-		drawingPanel.add(panel_4);
-
-		lineWidth = new JTextField();
-		lineWidth.setText("2");
-		lineWidth.setFont(defaultFont);
-		lineWidth.setColumns(10);
-		lineWidth.addKeyListener(this);
-		panel_4.add(lineWidth);
-
-		lblNewLabel_4 = new JLabel("Line Width");
-		lblNewLabel_4.setFont(new Font("Dialog", Font.BOLD, getTextSize()));
-		panel_4.add(lblNewLabel_4);
+		lineWidth = new TextInput("Line Width", defaultFont);
+		lineWidth.getInput().setText("2");
+		lineWidth.getInput().addKeyListener(this);
+		drawingPanel.add(lineWidth);
 
 		panel_5 = new JPanel();
 		drawingPanel.add(panel_5);
@@ -271,7 +224,7 @@ public class OptionsWindow extends JFrame implements KeyListener {
 
 	public void init() {
 		scaleX.getInput().setText(String.format("%.2f", canvasViewer.getScaleX()));
-		scaleY.setText(String.format("%.2f", canvasViewer.getScaleY()));
+		scaleY.getInput().setText(String.format("%.2f", canvasViewer.getScaleY()));
 	}
 
 	public int getProcessingWidth() {
@@ -304,32 +257,32 @@ public class OptionsWindow extends JFrame implements KeyListener {
 
 	@Override
 	public void keyTyped(KeyEvent event) {
-		if (event.getSource().equals(lineWidth)) {
+		if (event.getSource().equals(lineWidth.getInput())) {
 			setLineWidth();
-		} else if (event.getSource().equals(drawSpeed)) {
+		} else if (event.getSource().equals(drawSpeed.getInput())) {
 			updateSpeeds();
-		} else if (event.getSource().equals(travelSpeed)) {
+		} else if (event.getSource().equals(travelSpeed.getInput())) {
 			updateSpeeds();
 		}
 	}
 
 	private void updateSpeeds() {
-		ini.put(SECTION_SPEEDS, "draw_speed", drawSpeed.getText());
-		ini.put(SECTION_SPEEDS, "travel_speed", travelSpeed.getText());
+		ini.put(SECTION_SPEEDS, "draw_speed", drawSpeed.getInput().getText());
+		ini.put(SECTION_SPEEDS, "travel_speed", travelSpeed.getInput().getText());
 		tryStoreIni();
 	}
 
 	private void setScale() {
-		canvasViewer.setScale(scaleX.getInput().getText(), scaleY.getText());
+		canvasViewer.setScale(scaleX.getInput().getText(), scaleY.getInput().getText());
 	}
 
 	private void setLineWidth() {
-		canvasViewer.setLineWidth(lineWidth.getText());
+		canvasViewer.setLineWidth(lineWidth.getInput().getText());
 	}
 
 	private void doGenerateGcode() {
-		canvasViewer.setDrawSpeed(drawSpeed.getText());
-		canvasViewer.setTravelSpeed(travelSpeed.getText());
+		canvasViewer.setDrawSpeed(drawSpeed.getInput().getText());
+		canvasViewer.setTravelSpeed(travelSpeed.getInput().getText());
 		canvasViewer.generateGcode();
 	}
 
