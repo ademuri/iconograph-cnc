@@ -153,11 +153,9 @@ public class CanvasViewer extends PApplet {
 		}
 		scaleX = scale;
 		scaleY = scale;
-	    
-	    scaleFromSvg();
-	    slider.getControl().setNumberOfTickMarks(lines.size() + 1)
-			.setRange(0, lines.size() + 1)
-			.setValue(lines.size());
+    
+    scaleFromSvg();
+		slider.getControl().setNumberOfTickMarks(lines.size() + 1).setRange(0, lines.size()).setValue(lines.size());
 	}
 
 	public void scaleFromSvg() {
@@ -223,9 +221,15 @@ public class CanvasViewer extends PApplet {
 	private void traverse(Element element) {
 		if (element instanceof SVGGraphicsElement) {
 			if (element instanceof SVGOMPathElement) {
-				lines.add(pathToPoints((SVGOMPathElement) element));
+				List<Point> line = pathToPoints((SVGOMPathElement) element);
+				if (!line.isEmpty()) {
+					lines.add(line);
+				}
 			} else if (element instanceof SVGOMPolylineElement) {
-				lines.add(polylineToPoints((SVGOMPolylineElement) element));
+				List<Point> line = polylineToPoints((SVGOMPolylineElement) element);
+				if (!line.isEmpty()) {
+					lines.add(line);
+				}
 			}
 		}
 
@@ -273,6 +277,10 @@ public class CanvasViewer extends PApplet {
 			boolean reverse = false;
 			Point start = line.get(line.size() - 1);
 			for (List<Point> maybeNextLine : startXSorted) {
+				if (maybeNextLine.isEmpty()) {
+					// Dumb, but possible because of SVG parsing problems
+					continue;
+				}
 				double distance = start.distanceTo(maybeNextLine.get(0));
 				if (distance < shortestDistance) {
 					shortestDistance = distance;
@@ -283,6 +291,10 @@ public class CanvasViewer extends PApplet {
 				}
 			}
 			for (List<Point> maybeNextLine : endXSorted) {
+				if (maybeNextLine.isEmpty()) {
+					// Dumb, but possible because of SVG parsing problems
+					continue;
+				}
 				double distance = start.distanceTo(maybeNextLine.get(maybeNextLine.size() - 1));
 				if (distance < shortestDistance) {
 					shortestDistance = distance;
@@ -345,7 +357,8 @@ public class CanvasViewer extends PApplet {
 			rect(canvasStart.x, canvasStart.y, (float) (canvasStart.x + canvasWidth * canvasScale),
 					(float) (canvasStart.y + canvasHeight * canvasScale));
 			strokeWeight((float) (lineWidth * canvasScale));
-			for (int i = 0; i < slider.getValue(); i++) {
+			// Note: sometimes the values don't line up, maybe an SVG parsing problem
+			for (int i = 0; i < slider.getValue() && i < lines.size(); i++) {
 				drawLine(lines.get(i));
 			}
 		}
@@ -410,13 +423,24 @@ public class CanvasViewer extends PApplet {
 	private List<Point> pathToPoints(SVGOMPathElement path) {
 		List<Point> points = new ArrayList<>();
 		double length = path.getTotalLength();
+		if (length <= 0) {
+			return points;
+		}
+
 		double step = length
 				/ Math.ceil(length * Math.sqrt(Math.pow(scaleX, 2) + Math.pow(scaleY, 2)) / maxLineSegmentLength);
 		for (double i = 0; i <= length; i += step) {
 			SVGPoint point = path.getPointAtLength((float) i);
-			double x = point.getX() * scaleX + xOffset;
-			double y = point.getY() * scaleY;
-			points.add(new Point(x, y));
+			try {
+				double x = point.getX() * scaleX + xOffset;
+				double y = point.getY() * scaleY;
+				points.add(new Point(x, y));
+			} catch (Exception e) {
+				System.err.format(
+						"Got exception while converting path (%s) with length %.3f to points at length %.3f: %s\n",
+						path.getTextContent(), length, i,
+						e.getMessage());
+			}
 		}
 		return points;
 	}

@@ -312,9 +312,7 @@ public class OptionsWindow extends JFrame implements KeyListener {
 
 	@Override
 	public void keyTyped(KeyEvent event) {
-		if (event.getSource().equals(scaleX) || event.getSource().equals(scaleY)) {
-			setScale();
-		} else if (event.getSource().equals(lineWidth)) {
+		if (event.getSource().equals(lineWidth)) {
 			setLineWidth();
 		} else if (event.getSource().equals(drawSpeed)) {
 			updateSpeeds();
