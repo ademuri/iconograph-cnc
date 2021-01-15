@@ -37,8 +37,7 @@ public class OptionsWindow extends JFrame implements KeyListener {
 
 	private final CanvasViewer canvasViewer;
 	private JPanel contentPane;
-	private JTextField scaleX;
-	private final JLabel lblNewLabel = new JLabel("Scale X");
+	private TextInput scaleX;
 	private JTextField scaleY;
 
 	private final int processingWidth;
@@ -124,21 +123,14 @@ public class OptionsWindow extends JFrame implements KeyListener {
 		JPanel panel = new JPanel();
 		drawingPanel.add(panel);
 
-		scaleX = new JTextField();
-		scaleX.setFont(defaultFont);
+		scaleX = new TextInput("Scale X", defaultFont);
 		scaleX.addFocusListener(new FocusAdapter() {
 			@Override
 			public void focusLost(FocusEvent e) {
 				setScale();
 			}
 		});
-		panel.add(scaleX);
-		scaleX.setToolTipText("");
-		scaleX.setColumns(10);
-		scaleX.addKeyListener(this);
-		lblNewLabel.setFont(new Font("Dialog", Font.BOLD, getTextSize()));
-		panel.add(lblNewLabel);
-		lblNewLabel.setLabelFor(scaleX);
+		drawingPanel.add(scaleX);
 
 		JPanel panel_1 = new JPanel();
 		drawingPanel.add(panel_1);
@@ -278,7 +270,7 @@ public class OptionsWindow extends JFrame implements KeyListener {
 	}
 
 	public void init() {
-		scaleX.setText(String.format("%.2f", canvasViewer.getScaleX()));
+		scaleX.getInput().setText(String.format("%.2f", canvasViewer.getScaleX()));
 		scaleY.setText(String.format("%.2f", canvasViewer.getScaleY()));
 	}
 
@@ -328,7 +320,7 @@ public class OptionsWindow extends JFrame implements KeyListener {
 	}
 
 	private void setScale() {
-		canvasViewer.setScale(scaleX.getText(), scaleY.getText());
+		canvasViewer.setScale(scaleX.getInput().getText(), scaleY.getText());
 	}
 
 	private void setLineWidth() {
