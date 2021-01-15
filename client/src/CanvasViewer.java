@@ -47,14 +47,15 @@ public class CanvasViewer extends PApplet  {
 	// Note: all physical distances are in millimeters
 	private static final double MM_PER_INCH = 25.4;
 	//private static final double canvasWidth = 18 * MM_PER_INCH;
-	private static final double canvasWidth = 15.5 * MM_PER_INCH;
+	//private static final double canvasWidth = 15.5 * MM_PER_INCH;
+	private static final double canvasWidth = 14 * MM_PER_INCH;
 	private static final double canvasHeight = 10 * MM_PER_INCH;
 	private static final double machineWidth = 43 * MM_PER_INCH;
 	private static final double machineHeight = 24.5 * MM_PER_INCH;
 	private static final double canvasLeftX = (machineWidth - canvasWidth) / 2;
 	private static final double canvasRightX = canvasLeftX + canvasWidth;
 	private static final double canvasTopY = machineHeight - canvasHeight - 7 * MM_PER_INCH;
-	private static final double canvasBottomY = machineHeight - 3 * MM_PER_INCH;
+	private static final double canvasBottomY = canvasTopY + canvasHeight;
 	
 	private final double maxLineSegmentLength = 2;
 	
@@ -203,6 +204,21 @@ public class CanvasViewer extends PApplet  {
 			.setRange(0, lines.size())
 			.setValue(lines.size());
 >>>>>>> 42782b6... Fix short line bug
+		}
+	}
+	
+	private void createConsistencyTest() {
+		synchronized(this) {
+			lines = new ArrayList<>();
+			double step = 20;
+			double length = canvasHeight - 40;
+			for (double offset = 0; offset < length; offset += step) {
+				lines.add(new ArrayList<>(List.of(new Point(20, 20 + offset), new Point(20, 20 + offset + step))));
+				lines.add(new ArrayList<>(List.of(new Point(canvasWidth - 20, 20 + offset), new Point(canvasWidth - 20, 20 + offset + step))));
+			}
+			slider.getControl().setNumberOfTickMarks(lines.size() + 1)
+			.setRange(0, lines.size())
+			.setValue(lines.size());
 		}
 	}
 	
@@ -379,20 +395,24 @@ public class CanvasViewer extends PApplet  {
 	}
 	
 	private String penDownGcode() {
-		return String.format("G01 F%f Z%f ; Pen down\nG04 P0.1 ; Delay for 0.1s\n", 500.0, -0.8);
+		//return String.format("G01 F%f Z%f ; Pen down\nG04 P0.1 ; Delay for 0.1s\n", 200.0, -0.85);
+		return String.format("G01 F%f Z%f ; Pen down\nG04 P0.1 ; Delay for 0.1s\n", 200.0, -4.5);
 	}
 	
 	private String penUpGcode() {
-		return String.format("G01 F%f Z%f ; Pen up\n", 500.0, -2.0);
+		return String.format("G01 F%f Z%f ; Pen up\n", 500.0, -6.5);
 	}
 		
+	// TODO: do this the right way
+	double xOffset = 20;
+	
 	private List<Point> pathToPoints(SVGOMPathElement path) {
 		List<Point> points = new ArrayList<>();
 		double length = path.getTotalLength();
 		double step = length / Math.ceil(length * Math.sqrt(Math.pow(scaleX, 2) + Math.pow(scaleY, 2)) / maxLineSegmentLength);
 		for (double i = 0; i <= length; i += step) {
 			SVGPoint point = path.getPointAtLength((float) i);
-			double x = point.getX() * scaleX;
+			double x = point.getX() * scaleX + xOffset;
 			double y = point.getY() * scaleY;
 			points.add(new Point(x, y));
 		}
@@ -405,7 +425,7 @@ public class CanvasViewer extends PApplet  {
 		Point prevPoint = null;
 		for (int i = 0; i < pointList.getNumberOfItems(); i++) {
 			SVGPoint svgPoint = pointList.getItem(i);
-			Point point = new Point(svgPoint.getX() * scaleX, svgPoint.getY() * scaleY);
+			Point point = new Point(svgPoint.getX() * scaleX + xOffset, svgPoint.getY() * scaleY);
 			if (prevPoint == null) {
 				points.add(point);
 			} else {
