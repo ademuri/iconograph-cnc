@@ -5,7 +5,6 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.TreeMap;
 
 import org.apache.batik.anim.dom.SAXSVGDocumentFactory;
 import org.apache.batik.anim.dom.SVGGraphicsElement;
@@ -177,7 +176,7 @@ public class CanvasViewer extends PApplet {
     }
   }
 
-	private void createCalibration() {
+	public void createCalibration() {
 		synchronized (this) {
 			lines = new ArrayList<>();
 			List<Point> boundPoints = List.of(new Point(0, 0), new Point(canvasWidth, 0),
@@ -192,24 +191,22 @@ public class CanvasViewer extends PApplet {
 				}
 			}
 			lines.add(boundPointsInterpolated);
-			double xStep = canvasWidth / 20;
-			double yStep = canvasHeight / 20;
-			double length = .5;
+			double xStep = canvasWidth / 3;
+			double yStep = canvasHeight / 3;
+			double length = 5;
 			for (double x = xStep / 2; x < canvasWidth; x += xStep) {
 				for (double y = yStep / 2; y < canvasHeight; y += yStep) {
 					lines.add(new ArrayList<>(List.of(new Point(x - length / 2, y), new Point(x + length / 2, y))));
-					// lines.add(new ArrayList<>(List.of(new Point(x, y - length / 2), new Point(x,
-					// y + length / 2))));
+					lines.add(new ArrayList<>(List.of(new Point(x, y - length / 2), new Point(x, y + length / 2))));
 				}
 			}
-			// lines.add(new ArrayList<>(List.of(new Point(0, 0), new Point(canvasWidth, 0),
-			// new Point(canvasWidth, canvasHeight), new Point(0, canvasHeight), new
-			// Point(0, 0))));
+			lines.add(new ArrayList<>(List.of(new Point(0, 0), new Point(canvasWidth, 0),
+					new Point(canvasWidth, canvasHeight), new Point(0, canvasHeight), new Point(0, 0))));
 			slider.getControl().setNumberOfTickMarks(lines.size() + 1).setRange(0, lines.size()).setValue(lines.size());
 		}
 	}
 
-	private void createConsistencyTest() {
+	public void createConsistencyTest() {
 		synchronized (this) {
 			lines = new ArrayList<>();
 			double step = 20;

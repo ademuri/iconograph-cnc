@@ -22,6 +22,7 @@ import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JTabbedPane;
 import javax.swing.JTextField;
 import javax.swing.border.EmptyBorder;
 
@@ -61,6 +62,13 @@ public class OptionsWindow extends JFrame implements KeyListener {
 	private JButton btnLoadSvg;
 
 	private final JFileChooser fileChooser = new JFileChooser();
+	private JTabbedPane tabbedPane;
+	private JPanel drawingPanel;
+	private JPanel calPanel;
+	private JPanel panel_7;
+	private JButton btnCalPen;
+	private JButton btnCalAlignment;
+	private JPanel panel_8;
 
 	/**
 	 * Create the frame.
@@ -79,16 +87,45 @@ public class OptionsWindow extends JFrame implements KeyListener {
 		ini.setFile(new File(CONFIG_FILE));
 		Section speedConfig = ini.get(SECTION_SPEEDS);
 
+		Font defaultFont = new Font("Dialog", Font.PLAIN, getTextSize());
+
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		setBounds(100, 100, (int) (450 * monitorScale), (int) (300 * monitorScale));
 		contentPane = new JPanel();
 		contentPane.setBorder(new EmptyBorder(5, 5, 5, 5));
 		setContentPane(contentPane);
+		contentPane.setLayout(new BoxLayout(contentPane, BoxLayout.Y_AXIS));
+
+		tabbedPane = new JTabbedPane(JTabbedPane.TOP);
+		tabbedPane.setFont(defaultFont);
+		contentPane.add(tabbedPane);
+
+		drawingPanel = new JPanel();
+		tabbedPane.addTab("Drawing", null, drawingPanel, null);
+		drawingPanel.setLayout(new BoxLayout(drawingPanel, BoxLayout.Y_AXIS));
+
+		panel_6 = new JPanel();
+		drawingPanel.add(panel_6);
+
+		btnLoadSvg = new JButton("Load SVG");
+		btnLoadSvg.setFont(defaultFont);
+		btnLoadSvg.addActionListener(event -> {
+			setFontSize(fileChooser.getComponents());
+			fileChooser.setPreferredSize(new Dimension(getProcessingWidth(), getProcessingHeight()));
+			int r = fileChooser.showOpenDialog(this);
+			if (r == JFileChooser.APPROVE_OPTION) {
+				canvasViewer.loadSvg(fileChooser.getSelectedFile().getAbsolutePath());
+				Preferences prefs = Preferences.userRoot().node(getClass().getName());
+				prefs.put(LAST_DIR_SVG, fileChooser.getSelectedFile().getAbsolutePath());
+			}
+		});
+		panel_6.add(btnLoadSvg);
 
 		JPanel panel = new JPanel();
+		drawingPanel.add(panel);
 
 		scaleX = new JTextField();
-		scaleX.setFont(new Font("Dialog", Font.PLAIN, getTextSize()));
+		scaleX.setFont(defaultFont);
 		scaleX.addFocusListener(new FocusAdapter() {
 			@Override
 			public void focusLost(FocusEvent e) {
@@ -104,9 +141,10 @@ public class OptionsWindow extends JFrame implements KeyListener {
 		lblNewLabel.setLabelFor(scaleX);
 
 		JPanel panel_1 = new JPanel();
+		drawingPanel.add(panel_1);
 
 		scaleY = new JTextField();
-		scaleY.setFont(new Font("Dialog", Font.PLAIN, getTextSize()));
+		scaleY.setFont(defaultFont);
 		scaleY.addKeyListener(this);
 		scaleY.addFocusListener(new FocusAdapter() {
 			@Override
@@ -123,11 +161,10 @@ public class OptionsWindow extends JFrame implements KeyListener {
 		lblNewLabel_1.setLabelFor(scaleY);
 
 		panel_2 = new JPanel();
-
-		panel_6 = new JPanel();
+		drawingPanel.add(panel_2);
 
 		drawSpeed = new JTextField();
-		drawSpeed.setFont(new Font("Dialog", Font.PLAIN, getTextSize()));
+		drawSpeed.setFont(defaultFont);
 		drawSpeed.setText(speedConfig.getOrDefault("draw_speed", "2000"));
 		drawSpeed.setColumns(10);
 		drawSpeed.addKeyListener(this);
@@ -138,9 +175,10 @@ public class OptionsWindow extends JFrame implements KeyListener {
 		panel_2.add(lblNewLabel_2);
 
 		panel_3 = new JPanel();
+		drawingPanel.add(panel_3);
 
 		travelSpeed = new JTextField();
-		travelSpeed.setFont(new Font("Dialog", Font.PLAIN, getTextSize()));
+		travelSpeed.setFont(defaultFont);
 		travelSpeed.setText(speedConfig.getOrDefault("travel_speed", "2000"));
 		travelSpeed.setColumns(10);
 		travelSpeed.addKeyListener(this);
@@ -151,10 +189,11 @@ public class OptionsWindow extends JFrame implements KeyListener {
 		panel_3.add(lblNewLabel_3);
 
 		panel_4 = new JPanel();
+		drawingPanel.add(panel_4);
 
 		lineWidth = new JTextField();
 		lineWidth.setText("2");
-		lineWidth.setFont(new Font("Dialog", Font.PLAIN, getTextSize()));
+		lineWidth.setFont(defaultFont);
 		lineWidth.setColumns(10);
 		lineWidth.addKeyListener(this);
 		panel_4.add(lineWidth);
@@ -164,37 +203,39 @@ public class OptionsWindow extends JFrame implements KeyListener {
 		panel_4.add(lblNewLabel_4);
 
 		panel_5 = new JPanel();
+		drawingPanel.add(panel_5);
 
 		generateGcode = new JButton("Generate G-Code");
-		generateGcode.setFont(new Font("Dialog", Font.PLAIN, getTextSize()));
+		generateGcode.setFont(defaultFont);
 		generateGcode.addActionListener(event -> {
 			updateSpeeds();
 			doGenerateGcode();
 		});
 		panel_5.add(generateGcode);
-		contentPane.setLayout(new BoxLayout(contentPane, BoxLayout.Y_AXIS));
 
-		btnLoadSvg = new JButton("Load SVG");
-		btnLoadSvg.setFont(new Font("Dialog", Font.PLAIN, getTextSize()));
-		btnLoadSvg.addActionListener(event -> {
-			setFontSize(fileChooser.getComponents());
-			fileChooser.setPreferredSize(new Dimension(getProcessingWidth(), getProcessingHeight()));
-			int r = fileChooser.showOpenDialog(this);
-			if (r == JFileChooser.APPROVE_OPTION) {
-				canvasViewer.loadSvg(fileChooser.getSelectedFile().getAbsolutePath());
-				Preferences prefs = Preferences.userRoot().node(getClass().getName());
-				prefs.put(LAST_DIR_SVG, fileChooser.getSelectedFile().getAbsolutePath());
-			}
+		calPanel = new JPanel();
+		tabbedPane.addTab("Calibration", null, calPanel, null);
+		calPanel.setLayout(new BoxLayout(calPanel, BoxLayout.Y_AXIS));
+
+		panel_7 = new JPanel();
+		calPanel.add(panel_7);
+
+		btnCalPen = new JButton("Pen calibration");
+		btnCalPen.setFont(defaultFont);
+		btnCalPen.addActionListener(event -> {
+			canvasViewer.createCalibration();
 		});
-		panel_6.add(btnLoadSvg);
+		panel_7.add(btnCalPen);
 
-		contentPane.add(panel_6);
-		contentPane.add(panel);
-		contentPane.add(panel_1);
-		contentPane.add(panel_2);
-		contentPane.add(panel_3);
-		contentPane.add(panel_4);
-		contentPane.add(panel_5);
+		panel_8 = new JPanel();
+		calPanel.add(panel_8);
+
+		btnCalAlignment = new JButton("Alignment lines");
+		btnCalAlignment.setFont(defaultFont);
+		btnCalAlignment.addActionListener(event -> {
+			canvasViewer.createConsistencyTest();
+		});
+		panel_8.add(btnCalAlignment);
 		addKeyListener(this);
 		setLocationRight();
 
