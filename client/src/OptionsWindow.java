@@ -78,7 +78,6 @@ public class OptionsWindow extends JFrame implements KeyListener {
 			ini.store(new File(CONFIG_FILE));
 		}
 		ini.setFile(new File(CONFIG_FILE));
-		Section speedConfig = ini.get(SECTION_SPEEDS);
 
 		Font defaultFont = new Font("Dialog", Font.PLAIN, getTextSize());
 
@@ -91,6 +90,7 @@ public class OptionsWindow extends JFrame implements KeyListener {
 
 		tabbedPane = new JTabbedPane(JTabbedPane.TOP);
 		tabbedPane.setFont(defaultFont);
+		tabbedPane.addKeyListener(this);
 		contentPane.add(tabbedPane);
 
 		drawingPanel = new JPanel();
@@ -114,7 +114,7 @@ public class OptionsWindow extends JFrame implements KeyListener {
 		});
 		panel_6.add(btnLoadSvg);
 
-		scaleX = new TextInput("Scale X", defaultFont);
+		scaleX = new TextInput("Scale X", defaultFont, "1");
 		scaleX.getInput().addFocusListener(new FocusAdapter() {
 			@Override
 			public void focusLost(FocusEvent e) {
@@ -123,7 +123,7 @@ public class OptionsWindow extends JFrame implements KeyListener {
 		});
 		drawingPanel.add(scaleX);
 
-		scaleY = new TextInput("Scale Y", defaultFont);
+		scaleY = new TextInput("Scale Y", defaultFont, "1");
 		scaleY.getInput().addFocusListener(new FocusAdapter() {
 			@Override
 			public void focusLost(FocusEvent e) {
@@ -132,19 +132,16 @@ public class OptionsWindow extends JFrame implements KeyListener {
 		});
 		drawingPanel.add(scaleY);
 
-		drawSpeed = new TextInput("Draw Speed", defaultFont);
-		drawSpeed.getInput().addKeyListener(this);
-		drawSpeed.getInput().setText(speedConfig.getOrDefault("draw_speed", "2000"));
+		drawSpeed = new TextInput("Draw Speed", defaultFont, "2000");
+		drawSpeed.setConfig(ini, SECTION_SPEEDS, "draw_speed");
 		drawingPanel.add(drawSpeed);
 
-		travelSpeed = new TextInput("Travel Speed", defaultFont);
-		travelSpeed.getInput().addKeyListener(this);
-		travelSpeed.getInput().setText(speedConfig.getOrDefault("travel_speed", "2000"));
+		travelSpeed = new TextInput("Travel Speed", defaultFont, "3000");
+		travelSpeed.setConfig(ini, SECTION_SPEEDS, "travel_speed");
 		drawingPanel.add(travelSpeed);
 
-		lineWidth = new TextInput("Line Width", defaultFont);
-		lineWidth.getInput().setText("2");
-		lineWidth.getInput().addKeyListener(this);
+		lineWidth = new TextInput("Line Width", defaultFont, "2");
+		lineWidth.setConfig(ini, SECTION_SPEEDS, "line_width");
 		drawingPanel.add(lineWidth);
 
 		panel_5 = new JPanel();
@@ -153,7 +150,6 @@ public class OptionsWindow extends JFrame implements KeyListener {
 		generateGcode = new JButton("Generate G-Code");
 		generateGcode.setFont(defaultFont);
 		generateGcode.addActionListener(event -> {
-			updateSpeeds();
 			doGenerateGcode();
 		});
 		panel_5.add(generateGcode);
@@ -209,15 +205,6 @@ public class OptionsWindow extends JFrame implements KeyListener {
 		}
 	}
 
-	private void tryStoreIni() {
-		try {
-			ini.store();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-	}
-
 	private int getTextSize() {
 		return (int) (18 * monitorScale);
 	}
@@ -246,7 +233,9 @@ public class OptionsWindow extends JFrame implements KeyListener {
 	@Override
 	public void keyPressed(KeyEvent event) {
 		if (event.getKeyCode() == KeyEvent.VK_ESCAPE) {
-			updateSpeeds();
+			drawSpeed.saveToIni();
+			travelSpeed.saveToIni();
+			lineWidth.saveToIni();
 			System.exit(0);
 		}
 	}
@@ -257,19 +246,6 @@ public class OptionsWindow extends JFrame implements KeyListener {
 
 	@Override
 	public void keyTyped(KeyEvent event) {
-		if (event.getSource().equals(lineWidth.getInput())) {
-			setLineWidth();
-		} else if (event.getSource().equals(drawSpeed.getInput())) {
-			updateSpeeds();
-		} else if (event.getSource().equals(travelSpeed.getInput())) {
-			updateSpeeds();
-		}
-	}
-
-	private void updateSpeeds() {
-		ini.put(SECTION_SPEEDS, "draw_speed", drawSpeed.getInput().getText());
-		ini.put(SECTION_SPEEDS, "travel_speed", travelSpeed.getInput().getText());
-		tryStoreIni();
 	}
 
 	private void setScale() {
