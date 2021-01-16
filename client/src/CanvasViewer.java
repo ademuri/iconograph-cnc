@@ -76,8 +76,6 @@ public class CanvasViewer extends PApplet {
 	private double scaleX = 1;
 	private double scaleY = 1;
 	private double lineWidth = 1;
-	private double drawSpeed = 0;
-	private double travelSpeed = 0;
 	private Element svgRootElement;
 
 	public void setSize(int width, int height) {
@@ -391,14 +389,6 @@ public class CanvasViewer extends PApplet {
 		redraw();
 	}
 
-	public void setDrawSpeed(String speed) {
-		drawSpeed = parseDoubleOrDefault(speed, 0);
-	}
-
-	public void setTravelSpeed(String speed) {
-		travelSpeed = parseDoubleOrDefault(speed, 0);
-	}
-
 	public double getScaleX() {
 		return scaleX;
 	}
@@ -407,14 +397,14 @@ public class CanvasViewer extends PApplet {
 		return scaleY;
 	}
 
-	private String penDownGcode() {
+	private static String penDownGcode(GcodeConfig config) {
 		// return String.format("G01 F%f Z%f ; Pen down\nG04 P0.1 ; Delay for 0.1s\n",
 		// 200.0, -0.85);
-		return String.format("G01 F%f Z%f ; Pen down\nG04 P0.1 ; Delay for 0.1s\n", 200.0, -4.5);
+		return String.format("G01 F%f Z%f ; Pen down\nG04 P0.1 ; Delay for 0.1s\n", config.penSpeed(), config.penDown());
 	}
 
-	private String penUpGcode() {
-		return String.format("G01 F%f Z%f ; Pen up\n", 500.0, -6.5);
+	private static String penUpGcode(GcodeConfig config) {
+		return String.format("G01 F%f Z%f ; Pen up\n", config.penSpeed(), config.penUp());
 	}
 
 	// TODO: do this the right way
@@ -483,13 +473,13 @@ public class CanvasViewer extends PApplet {
 		return new Point(beltPoint.x - homingLR.x, beltPoint.y - homingLR.y);
 	}
 
-	public void generateGcode() {
+	public void generateGcode(GcodeConfig config) {
 		try {
 			BufferedWriter writer = Files.newBufferedWriter(Path.of("out.gcode"));
 			writer.append("G90 ; Absolute positioning\n\n");
 
 			boolean penDown = false;
-			writer.append(penUpGcode());
+			writer.append(penUpGcode(config));
 
 			for (int i = 0; i < lines.size(); i++) {
 				writer.append("\n");
@@ -500,25 +490,25 @@ public class CanvasViewer extends PApplet {
 						System.err.format("Point X out of bounds: %s, X: %f -> %f, canvas point: %s\n", machinePoint,
 								canvasLeftX, canvasRightX, points.get(j));
 						if (penDown) {
-							writer.append(penUpGcode());
+							writer.append(penUpGcode(config));
 							penDown = false;
 						}
 					} else if (machinePoint.y > canvasBottomY || machinePoint.y < canvasTopY) {
 						System.err.format("Point Y out of bounds: %s,  Y: %f -> %f, canvas point: %s\n", machinePoint,
 								canvasTopY, canvasBottomY, points.get(j));
 						if (penDown) {
-							writer.append(penUpGcode());
+							writer.append(penUpGcode(config));
 							penDown = false;
 						}
 					} else {
 						Point beltPoint = machineToBeltPoint(machinePoint);
 						if (!penDown) {
 							writer.append(
-									String.format("G01 F%f X%.3f Y%.3f\n", travelSpeed, beltPoint.x, beltPoint.y));
-							writer.append(penDownGcode());
+									String.format("G01 F%f X%.3f Y%.3f\n", config.travelSpeed(), beltPoint.x, beltPoint.y));
+							writer.append(penDownGcode(config));
 							penDown = true;
 						} else {
-							writer.append(String.format("G01 F%f X%.3f Y%.3f\n", drawSpeed, beltPoint.x, beltPoint.y));
+							writer.append(String.format("G01 F%f X%.3f Y%.3f\n", config.drawSpeed(), beltPoint.x, beltPoint.y));
 						}
 					}
 				}
@@ -530,20 +520,20 @@ public class CanvasViewer extends PApplet {
 						// Keep pen down
 						penDown = true;
 					} else {
-						writer.append(penUpGcode());
+						writer.append(penUpGcode(config));
 						penDown = false;
 					}
 				} else {
-					writer.append(penUpGcode());
+					writer.append(penUpGcode(config));
 					penDown = false;
 				}
 			}
 
 			writer.append("\n; Final position\n");
-			writer.append(penUpGcode());
+			writer.append(penUpGcode(config));
 			Point finalPositionBelt = machineToBeltPoint(finalPosition);
 			writer.append(
-					String.format("G01 F%f X%.3f Y%.3f\n", travelSpeed, finalPositionBelt.x, finalPositionBelt.y));
+					String.format("G01 F%f X%.3f Y%.3f\n", config.travelSpeed(), finalPositionBelt.x, finalPositionBelt.y));
 			writer.close();
 		} catch (IOException e) {
 			e.printStackTrace();

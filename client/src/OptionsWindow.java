@@ -44,6 +44,9 @@ public class OptionsWindow extends JFrame implements KeyListener {
 	private TextInput scaleY;
 	private TextInput drawSpeed;
 	private TextInput travelSpeed;
+	private TextInput penDown;
+	private TextInput penUp;
+	private TextInput penSpeed;
 	private TextInput lineWidth;
 
 	private final int processingWidth;
@@ -114,6 +117,8 @@ public class OptionsWindow extends JFrame implements KeyListener {
 			int r = fileChooser.showOpenDialog(this);
 			if (r == JFileChooser.APPROVE_OPTION) {
 				canvasViewer.loadSvg(fileChooser.getSelectedFile().getAbsolutePath());
+				scaleX.getInput().setText(Double.toString(canvasViewer.getScaleX()));
+				scaleY.getInput().setText(Double.toString(canvasViewer.getScaleY()));
 				Preferences prefs = Preferences.userRoot().node(getClass().getName());
 				prefs.put(LAST_DIR_SVG, fileChooser.getSelectedFile().getAbsolutePath());
 			}
@@ -161,15 +166,15 @@ public class OptionsWindow extends JFrame implements KeyListener {
 		lblPenSettings.setFont(new Font("Dialog", Font.PLAIN, (int)(getTextSize() * 0.8)));
 		penConfig.add(lblPenSettings);
 		
-		TextInput penDown = new TextInput("Pen Down", defaultFont, "-0.5");
+		penDown = new TextInput("Pen Down", defaultFont, "-0.5");
 		penDown.setConfig(ini, SECTION_DRAWING, "pen_down");
 		penConfig.add(penDown);
 		
-		TextInput penUp = new TextInput("Pen Up", defaultFont, "-2.0");
+		penUp = new TextInput("Pen Up", defaultFont, "-2.0");
 		penUp.setConfig(ini, SECTION_DRAWING, "pen_up");
 		penConfig.add(penUp);
 		
-		TextInput penSpeed = new TextInput("Pen Speed", defaultFont, "400");
+		penSpeed = new TextInput("Pen Speed", defaultFont, "400");
 		penSpeed.setConfig(ini, SECTION_DRAWING, "pen_speed");
 		penConfig.add(penSpeed); 
 
@@ -286,9 +291,14 @@ public class OptionsWindow extends JFrame implements KeyListener {
 	}
 
 	private void doGenerateGcode() {
-		canvasViewer.setDrawSpeed(drawSpeed.getInput().getText());
-		canvasViewer.setTravelSpeed(travelSpeed.getInput().getText());
-		canvasViewer.generateGcode();
+		GcodeConfig config = GcodeConfig.builder()
+				.setDrawSpeed(Double.parseDouble(drawSpeed.getInput().getText()))
+				.setTravelSpeed(Double.parseDouble(travelSpeed.getInput().getText()))
+				.setPenDown(Double.parseDouble(penDown.getInput().getText()))
+				.setPenUp(Double.parseDouble(penUp.getInput().getText()))
+				.setPenSpeed(Double.parseDouble(penSpeed.getInput().getText()))
+				.build();
+		canvasViewer.generateGcode(config);
 	}
 
 	private void setLocationRight() {

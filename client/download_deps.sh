@@ -12,4 +12,18 @@ unzip ini4j-0.5.4-bin.zip
 wget https://ftp.wayne.edu/apache//commons/math/binaries/commons-math3-3.6.1-bin.zip
 unzip commons-math3-3.6.1-bin.zip
 
+mkdir -p auto-value
+pushd auto-value
+wget https://repo1.maven.org/maven2/com/google/auto/value/auto-value/1.7.4/auto-value-1.7.4-javadoc.jar
+wget https://repo1.maven.org/maven2/com/google/auto/value/auto-value/1.7.4/auto-value-1.7.4-sources.jar
+wget https://repo1.maven.org/maven2/com/google/auto/value/auto-value/1.7.4/auto-value-1.7.4.jar
+popd
+
+mkdir -p auto-value-annotations
+pushd auto-value-annotations
+wget https://repo1.maven.org/maven2/com/google/auto/value/auto-value-annotations/1.7.4/auto-value-annotations-1.7.4-javadoc.jar
+wget https://repo1.maven.org/maven2/com/google/auto/value/auto-value-annotations/1.7.4/auto-value-annotations-1.7.4-sources.jar
+wget https://repo1.maven.org/maven2/com/google/auto/value/auto-value-annotations/1.7.4/auto-value-annotations-1.7.4.jar
+popd
+
 popd
