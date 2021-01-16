@@ -120,8 +120,8 @@ public class OptionsWindow extends JFrame implements KeyListener {
 			int r = fileChooser.showOpenDialog(this);
 			if (r == JFileChooser.APPROVE_OPTION) {
 				canvasViewer.loadSvg(fileChooser.getSelectedFile().getAbsolutePath());
-				scaleX.getInput().setText(Double.toString(canvasViewer.getScaleX()));
-				scaleY.getInput().setText(Double.toString(canvasViewer.getScaleY()));
+				scaleX.getInput().setText(String.format("%3.2f", canvasViewer.getScaleX()));
+				scaleY.getInput().setText(String.format("%3.2f", canvasViewer.getScaleY()));
 				Preferences prefs = Preferences.userRoot().node(getClass().getName());
 				prefs.put(LAST_DIR_SVG, fileChooser.getSelectedFile().getAbsolutePath());
 			}
