@@ -29,16 +29,22 @@ import javax.swing.border.EmptyBorder;
 import org.ini4j.Ini;
 import org.ini4j.InvalidFileFormatException;
 import org.ini4j.Profile.Section;
+import javax.swing.border.LineBorder;
+import java.awt.Color;
+import javax.swing.SwingConstants;
 
 public class OptionsWindow extends JFrame implements KeyListener {
 	private static final String CONFIG_FILE = "config.ini";
-	private static final String SECTION_SPEEDS = "speeds";
+	private static final String SECTION_DRAWING = "drawing";
 	private static final String LAST_DIR_SVG = "LAST_DIR_SVG";
 
 	private final CanvasViewer canvasViewer;
 	private JPanel contentPane;
 	private TextInput scaleX;
 	private TextInput scaleY;
+	private TextInput drawSpeed;
+	private TextInput travelSpeed;
+	private TextInput lineWidth;
 
 	private final int processingWidth;
 	private final int processingHeight;
@@ -46,9 +52,7 @@ public class OptionsWindow extends JFrame implements KeyListener {
 	private final int upperBound;
 	private final double monitorScale;
 	private final Ini ini;
-	private TextInput drawSpeed;
-	private TextInput travelSpeed;
-	private TextInput lineWidth;
+	
 	private JPanel panel_5;
 	private JButton generateGcode;
 	private JPanel panel_6;
@@ -62,6 +66,8 @@ public class OptionsWindow extends JFrame implements KeyListener {
 	private JButton btnCalPen;
 	private JButton btnCalAlignment;
 	private JPanel panel_8;
+	private JPanel penConfig;
+	private JLabel lblPenSettings;
 
 	/**
 	 * Create the frame.
@@ -74,7 +80,7 @@ public class OptionsWindow extends JFrame implements KeyListener {
 		if (Files.exists(Paths.get(CONFIG_FILE))) {
 			ini.load(new File(CONFIG_FILE));
 		} else {
-			ini.add(SECTION_SPEEDS);
+			ini.add(SECTION_DRAWING);
 			ini.store(new File(CONFIG_FILE));
 		}
 		ini.setFile(new File(CONFIG_FILE));
@@ -82,7 +88,7 @@ public class OptionsWindow extends JFrame implements KeyListener {
 		Font defaultFont = new Font("Dialog", Font.PLAIN, getTextSize());
 
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		setBounds(100, 100, (int) (450 * monitorScale), (int) (400 * monitorScale));
+		setBounds(100, 100, (int) (450 * monitorScale), (int) (800 * monitorScale));
 		contentPane = new JPanel();
 		contentPane.setBorder(new EmptyBorder(5, 5, 5, 5));
 		setContentPane(contentPane);
@@ -133,16 +139,39 @@ public class OptionsWindow extends JFrame implements KeyListener {
 		drawingPanel.add(scaleY);
 
 		drawSpeed = new TextInput("Draw Speed", defaultFont, "2000");
-		drawSpeed.setConfig(ini, SECTION_SPEEDS, "draw_speed");
+		drawSpeed.setConfig(ini, SECTION_DRAWING, "draw_speed");
 		drawingPanel.add(drawSpeed);
 
 		travelSpeed = new TextInput("Travel Speed", defaultFont, "3000");
-		travelSpeed.setConfig(ini, SECTION_SPEEDS, "travel_speed");
+		travelSpeed.setConfig(ini, SECTION_DRAWING, "travel_speed");
 		drawingPanel.add(travelSpeed);
 
 		lineWidth = new TextInput("Line Width", defaultFont, "2");
-		lineWidth.setConfig(ini, SECTION_SPEEDS, "line_width");
+		lineWidth.setConfig(ini, SECTION_DRAWING, "line_width");
 		drawingPanel.add(lineWidth);
+		
+		penConfig = new JPanel();
+		penConfig.setBorder(new LineBorder(new Color(0, 0, 0)));
+		penConfig.setLayout(new BoxLayout(penConfig, BoxLayout.Y_AXIS));
+		drawingPanel.add(penConfig);
+		
+		lblPenSettings = new JLabel("Pen Settings");
+		lblPenSettings.setVerticalAlignment(SwingConstants.TOP);
+		lblPenSettings.setHorizontalAlignment(SwingConstants.LEFT);
+		lblPenSettings.setFont(new Font("Dialog", Font.PLAIN, (int)(getTextSize() * 0.8)));
+		penConfig.add(lblPenSettings);
+		
+		TextInput penDown = new TextInput("Pen Down", defaultFont, "-0.5");
+		penDown.setConfig(ini, SECTION_DRAWING, "pen_down");
+		penConfig.add(penDown);
+		
+		TextInput penUp = new TextInput("Pen Up", defaultFont, "-2.0");
+		penUp.setConfig(ini, SECTION_DRAWING, "pen_up");
+		penConfig.add(penUp);
+		
+		TextInput penSpeed = new TextInput("Pen Speed", defaultFont, "400");
+		penSpeed.setConfig(ini, SECTION_DRAWING, "pen_speed");
+		penConfig.add(penSpeed); 
 
 		panel_5 = new JPanel();
 		drawingPanel.add(panel_5);
