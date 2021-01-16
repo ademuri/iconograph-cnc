@@ -75,6 +75,8 @@ public class CanvasViewer extends PApplet {
 	private SmartControl<Slider> slider;
 	private double scaleX = 1;
 	private double scaleY = 1;
+	private double offsetX = 0;
+	private double offsetY = 0;
 	private double lineWidth = 1;
 	private Element svgRootElement;
 
@@ -338,7 +340,7 @@ public class CanvasViewer extends PApplet {
 			Point prevPoint = line.get(i - 1);
 			Point point = line.get(i);
 			if (prevPoint.x >= 0 && prevPoint.x <= canvasWidth && prevPoint.y >= 0 && prevPoint.y <= canvasHeight) {
-				canvasLine(prevPoint.x, prevPoint.y, point.x, point.y);
+				canvasLine(prevPoint.x + offsetX, prevPoint.y + offsetY, point.x + offsetX, point.y + offsetY);
 			}
 		}
 	}
@@ -383,6 +385,12 @@ public class CanvasViewer extends PApplet {
 		scaleFromSvg();
 		redraw();
 	}
+	
+	public void setOffset(double x, double y) {
+		this.offsetX = x;
+		this.offsetY = y;
+		redraw();
+	}
 
 	public void setLineWidth(String w) {
 		lineWidth = parseDoubleOrDefault(w, 1);
@@ -407,9 +415,6 @@ public class CanvasViewer extends PApplet {
 		return String.format("G01 F%f Z%f ; Pen up\n", config.penSpeed(), config.penUp());
 	}
 
-	// TODO: do this the right way
-	double xOffset = 20;
-
 	private List<Point> pathToPoints(SVGOMPathElement path) {
 		List<Point> points = new ArrayList<>();
 		double length = path.getTotalLength();
@@ -422,7 +427,7 @@ public class CanvasViewer extends PApplet {
 		for (double i = 0; i <= length; i += step) {
 			SVGPoint point = path.getPointAtLength((float) i);
 			try {
-				double x = point.getX() * scaleX + xOffset;
+				double x = point.getX() * scaleX + offsetX;
 				double y = point.getY() * scaleY;
 				points.add(new Point(x, y));
 			} catch (Exception e) {
@@ -441,7 +446,7 @@ public class CanvasViewer extends PApplet {
 		Point prevPoint = null;
 		for (int i = 0; i < pointList.getNumberOfItems(); i++) {
 			SVGPoint svgPoint = pointList.getItem(i);
-			Point point = new Point(svgPoint.getX() * scaleX + xOffset, svgPoint.getY() * scaleY);
+			Point point = new Point(svgPoint.getX() * scaleX + offsetX, svgPoint.getY() * scaleY);
 			if (prevPoint == null) {
 				points.add(point);
 			} else {

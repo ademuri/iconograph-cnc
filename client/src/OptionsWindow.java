@@ -42,6 +42,8 @@ public class OptionsWindow extends JFrame implements KeyListener {
 	private JPanel contentPane;
 	private TextInput scaleX;
 	private TextInput scaleY;
+	private TextInput offsetX;
+	private TextInput offsetY;
 	private TextInput drawSpeed;
 	private TextInput travelSpeed;
 	private TextInput penDown;
@@ -55,7 +57,7 @@ public class OptionsWindow extends JFrame implements KeyListener {
 	private final int upperBound;
 	private final double monitorScale;
 	private final Ini ini;
-	
+
 	private JPanel panel_5;
 	private JButton generateGcode;
 	private JPanel panel_6;
@@ -71,6 +73,7 @@ public class OptionsWindow extends JFrame implements KeyListener {
 	private JPanel panel_8;
 	private JPanel penConfig;
 	private JLabel lblPenSettings;
+	private JPanel transformPanel;
 
 	/**
 	 * Create the frame.
@@ -125,23 +128,45 @@ public class OptionsWindow extends JFrame implements KeyListener {
 		});
 		panel_6.add(btnLoadSvg);
 
+		transformPanel = new JPanel();
+		transformPanel.setBorder(new LineBorder(new Color(0, 0, 0)));
+		drawingPanel.add(transformPanel);
+		transformPanel.setLayout(new BoxLayout(transformPanel, BoxLayout.Y_AXIS));
+
 		scaleX = new TextInput("Scale X", defaultFont, "1");
-		scaleX.getInput().addFocusListener(new FocusAdapter() {
-			@Override
-			public void focusLost(FocusEvent e) {
-				setScale();
-			}
-		});
-		drawingPanel.add(scaleX);
+		transformPanel.add(scaleX);
 
 		scaleY = new TextInput("Scale Y", defaultFont, "1");
+		transformPanel.add(scaleY);
 		scaleY.getInput().addFocusListener(new FocusAdapter() {
 			@Override
 			public void focusLost(FocusEvent e) {
 				setScale();
 			}
 		});
-		drawingPanel.add(scaleY);
+		scaleX.getInput().addFocusListener(new FocusAdapter() {
+			@Override
+			public void focusLost(FocusEvent e) {
+				setScale();
+			}
+		});
+		
+		offsetX = new TextInput("Offset X", defaultFont, "0");
+		transformPanel.add(offsetX);
+		offsetX.getInput().addFocusListener(new FocusAdapter() {
+			@Override
+			public void focusLost(FocusEvent e) {
+				setOffset();
+			}
+		});
+		offsetY = new TextInput("Offset Y", defaultFont, "0");
+		transformPanel.add(offsetY);
+		offsetY.getInput().addFocusListener(new FocusAdapter() {
+			@Override
+			public void focusLost(FocusEvent e) {
+				setOffset();
+			}
+		});
 
 		drawSpeed = new TextInput("Draw Speed", defaultFont, "2000");
 		drawSpeed.setConfig(ini, SECTION_DRAWING, "draw_speed");
@@ -154,29 +179,29 @@ public class OptionsWindow extends JFrame implements KeyListener {
 		lineWidth = new TextInput("Line Width", defaultFont, "2");
 		lineWidth.setConfig(ini, SECTION_DRAWING, "line_width");
 		drawingPanel.add(lineWidth);
-		
+
 		penConfig = new JPanel();
 		penConfig.setBorder(new LineBorder(new Color(0, 0, 0)));
 		penConfig.setLayout(new BoxLayout(penConfig, BoxLayout.Y_AXIS));
 		drawingPanel.add(penConfig);
-		
+
 		lblPenSettings = new JLabel("Pen Settings");
 		lblPenSettings.setVerticalAlignment(SwingConstants.TOP);
 		lblPenSettings.setHorizontalAlignment(SwingConstants.LEFT);
-		lblPenSettings.setFont(new Font("Dialog", Font.PLAIN, (int)(getTextSize() * 0.8)));
+		lblPenSettings.setFont(new Font("Dialog", Font.PLAIN, (int) (getTextSize() * 0.8)));
 		penConfig.add(lblPenSettings);
-		
+
 		penDown = new TextInput("Pen Down", defaultFont, "-0.5");
 		penDown.setConfig(ini, SECTION_DRAWING, "pen_down");
 		penConfig.add(penDown);
-		
+
 		penUp = new TextInput("Pen Up", defaultFont, "-2.0");
 		penUp.setConfig(ini, SECTION_DRAWING, "pen_up");
 		penConfig.add(penUp);
-		
+
 		penSpeed = new TextInput("Pen Speed", defaultFont, "400");
 		penSpeed.setConfig(ini, SECTION_DRAWING, "pen_speed");
-		penConfig.add(penSpeed); 
+		penConfig.add(penSpeed);
 
 		panel_5 = new JPanel();
 		drawingPanel.add(panel_5);
@@ -285,19 +310,21 @@ public class OptionsWindow extends JFrame implements KeyListener {
 	private void setScale() {
 		canvasViewer.setScale(scaleX.getInput().getText(), scaleY.getInput().getText());
 	}
+	
+	private void setOffset() {
+		canvasViewer.setOffset(Double.parseDouble(offsetX.getInput().getText()), Double.parseDouble(offsetY.getInput().getText()));
+	}
 
 	private void setLineWidth() {
 		canvasViewer.setLineWidth(lineWidth.getInput().getText());
 	}
 
 	private void doGenerateGcode() {
-		GcodeConfig config = GcodeConfig.builder()
-				.setDrawSpeed(Double.parseDouble(drawSpeed.getInput().getText()))
+		GcodeConfig config = GcodeConfig.builder().setDrawSpeed(Double.parseDouble(drawSpeed.getInput().getText()))
 				.setTravelSpeed(Double.parseDouble(travelSpeed.getInput().getText()))
 				.setPenDown(Double.parseDouble(penDown.getInput().getText()))
 				.setPenUp(Double.parseDouble(penUp.getInput().getText()))
-				.setPenSpeed(Double.parseDouble(penSpeed.getInput().getText()))
-				.build();
+				.setPenSpeed(Double.parseDouble(penSpeed.getInput().getText())).build();
 		canvasViewer.generateGcode(config);
 	}
 
