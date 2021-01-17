@@ -130,19 +130,19 @@ public class CanvasViewer extends PApplet {
 		// See
 		// https://stackoverflow.com/questions/26027313/how-to-load-and-parse-svg-documents
 		UserAgent userAgent = new UserAgentAdapter();
-	    DocumentLoader loader = new DocumentLoader(userAgent);
-	    BridgeContext bridgeContext = new BridgeContext(userAgent, loader);
-	    bridgeContext.setDynamicState(BridgeContext.DYNAMIC);
-	    // Enable CSS- and SVG-specific enhancements.
-	    (new GVTBuilder()).build(bridgeContext, doc);
-	    
-	    // Needed so that draw() isn't called in the middle of updating
-	    svgRootElement = doc.getDocumentElement();
+		DocumentLoader loader = new DocumentLoader(userAgent);
+		BridgeContext bridgeContext = new BridgeContext(userAgent, loader);
+		bridgeContext.setDynamicState(BridgeContext.DYNAMIC);
+		// Enable CSS- and SVG-specific enhancements.
+		(new GVTBuilder()).build(bridgeContext, doc);
+
+		// Needed so that draw() isn't called in the middle of updating
+		svgRootElement = doc.getDocumentElement();
 		SVGLength width = ((SVGOMSVGElement) svgRootElement).getWidth().getBaseVal();
 		width.convertToSpecifiedUnits(SVGLength.SVG_LENGTHTYPE_MM);
 		SVGLength height = ((SVGOMSVGElement) svgRootElement).getHeight().getBaseVal();
 		height.convertToSpecifiedUnits(SVGLength.SVG_LENGTHTYPE_MM);
-		
+
 		double scale = 1;
 		double svgWidth = width.getValueInSpecifiedUnits();
 		double svgHeight = height.getValueInSpecifiedUnits();
@@ -153,26 +153,19 @@ public class CanvasViewer extends PApplet {
 		}
 		scaleX = scale;
 		scaleY = scale;
-    
-    scaleFromSvg();
+
+		scaleFromSvg();
 		slider.getControl().setNumberOfTickMarks(lines.size() + 1).setRange(0, lines.size()).setValue(lines.size());
 	}
 
 	public void scaleFromSvg() {
-		synchronized(this) {
+		synchronized (this) {
 			lines = new ArrayList<>();
-      // Prime line
-      ArrayList<Point> primeLine = new ArrayList<>();
-      primeLine.add(new Point(0, 0));
-      primeLine.add(new Point(50, 0));
-      primeLine.add(new Point(0, 0));
-      primeLine.add(new Point(50, 0));
-      lines.add(primeLine);
 
 			traverse(svgRootElement);
 			lines = sort(lines);
-    }
-  }
+		}
+	}
 
 	public void createCalibration() {
 		synchronized (this) {
@@ -337,10 +330,10 @@ public class CanvasViewer extends PApplet {
 
 	private void drawLine(List<Point> line) {
 		for (int i = 1; i < line.size(); i++) {
-			Point prevPoint = line.get(i - 1);
-			Point point = line.get(i);
+			Point prevPoint = line.get(i - 1).translate(offsetX, offsetY);
+			Point point = line.get(i).translate(offsetX, offsetY);
 			if (prevPoint.x >= 0 && prevPoint.x <= canvasWidth && prevPoint.y >= 0 && prevPoint.y <= canvasHeight) {
-				canvasLine(prevPoint.x + offsetX, prevPoint.y + offsetY, point.x + offsetX, point.y + offsetY);
+				canvasLine(prevPoint.x, prevPoint.y, point.x, point.y);
 			}
 		}
 	}
@@ -354,8 +347,8 @@ public class CanvasViewer extends PApplet {
 			clear();
 			background(50, 50, 50);
 			fill(255);
-			rect(canvasStart.x, canvasStart.y, (float) (canvasStart.x + canvasWidth * canvasScale),
-					(float) (canvasStart.y + canvasHeight * canvasScale));
+			rect(canvasStart.x, canvasStart.y, (float) (canvasWidth * canvasScale),
+					(float) (canvasHeight * canvasScale));
 			strokeWeight((float) (lineWidth * canvasScale));
 			// Note: sometimes the values don't line up, maybe an SVG parsing problem
 			for (int i = 0; i < slider.getValue() && i < lines.size(); i++) {
@@ -385,7 +378,7 @@ public class CanvasViewer extends PApplet {
 		scaleFromSvg();
 		redraw();
 	}
-	
+
 	public void setOffset(double x, double y) {
 		this.offsetX = x;
 		this.offsetY = y;
@@ -408,7 +401,8 @@ public class CanvasViewer extends PApplet {
 	private static String penDownGcode(GcodeConfig config) {
 		// return String.format("G01 F%f Z%f ; Pen down\nG04 P0.1 ; Delay for 0.1s\n",
 		// 200.0, -0.85);
-		return String.format("G01 F%f Z%f ; Pen down\nG04 P0.1 ; Delay for 0.1s\n", config.penSpeed(), config.penDown());
+		return String.format("G01 F%f Z%f ; Pen down\nG04 P0.1 ; Delay for 0.1s\n", config.penSpeed(),
+				config.penDown());
 	}
 
 	private static String penUpGcode(GcodeConfig config) {
@@ -427,14 +421,13 @@ public class CanvasViewer extends PApplet {
 		for (double i = 0; i <= length; i += step) {
 			SVGPoint point = path.getPointAtLength((float) i);
 			try {
-				double x = point.getX() * scaleX + offsetX;
+				double x = point.getX() * scaleX;
 				double y = point.getY() * scaleY;
 				points.add(new Point(x, y));
 			} catch (Exception e) {
 				System.err.format(
 						"Got exception while converting path (%s) with length %.3f to points at length %.3f: %s\n",
-						path.getTextContent(), length, i,
-						e.getMessage());
+						path.getTextContent(), length, i, e.getMessage());
 			}
 		}
 		return points;
@@ -446,7 +439,7 @@ public class CanvasViewer extends PApplet {
 		Point prevPoint = null;
 		for (int i = 0; i < pointList.getNumberOfItems(); i++) {
 			SVGPoint svgPoint = pointList.getItem(i);
-			Point point = new Point(svgPoint.getX() * scaleX + offsetX, svgPoint.getY() * scaleY);
+			Point point = new Point(svgPoint.getX() * scaleX, svgPoint.getY() * scaleY);
 			if (prevPoint == null) {
 				points.add(point);
 			} else {
@@ -486,11 +479,19 @@ public class CanvasViewer extends PApplet {
 			boolean penDown = false;
 			writer.append(penUpGcode(config));
 
+			// Prime line
+			ArrayList<Point> primeLine = new ArrayList<>();
+			primeLine.add(new Point(0, 0));
+			primeLine.add(new Point(50, 0));
+			primeLine.add(new Point(0, 0));
+			primeLine.add(new Point(50, 0));
+			lines.add(0, primeLine);
+
 			for (int i = 0; i < lines.size(); i++) {
 				writer.append("\n");
 				List<Point> points = lines.get(i);
 				for (int j = 0; j < points.size(); j++) {
-					Point machinePoint = new Point(canvasLeftX + points.get(j).x, canvasTopY + points.get(j).y);
+					Point machinePoint = points.get(j).translate(canvasLeftX, canvasTopY).translate(offsetX, offsetY);
 					if (machinePoint.x > canvasRightX || machinePoint.x < canvasLeftX) {
 						System.err.format("Point X out of bounds: %s, X: %f -> %f, canvas point: %s\n", machinePoint,
 								canvasLeftX, canvasRightX, points.get(j));
@@ -508,12 +509,13 @@ public class CanvasViewer extends PApplet {
 					} else {
 						Point beltPoint = machineToBeltPoint(machinePoint);
 						if (!penDown) {
-							writer.append(
-									String.format("G01 F%f X%.3f Y%.3f\n", config.travelSpeed(), beltPoint.x, beltPoint.y));
+							writer.append(String.format("G01 F%f X%.3f Y%.3f\n", config.travelSpeed(), beltPoint.x,
+									beltPoint.y));
 							writer.append(penDownGcode(config));
 							penDown = true;
 						} else {
-							writer.append(String.format("G01 F%f X%.3f Y%.3f\n", config.drawSpeed(), beltPoint.x, beltPoint.y));
+							writer.append(String.format("G01 F%f X%.3f Y%.3f\n", config.drawSpeed(), beltPoint.x,
+									beltPoint.y));
 						}
 					}
 				}
@@ -537,8 +539,8 @@ public class CanvasViewer extends PApplet {
 			writer.append("\n; Final position\n");
 			writer.append(penUpGcode(config));
 			Point finalPositionBelt = machineToBeltPoint(finalPosition);
-			writer.append(
-					String.format("G01 F%f X%.3f Y%.3f\n", config.travelSpeed(), finalPositionBelt.x, finalPositionBelt.y));
+			writer.append(String.format("G01 F%f X%.3f Y%.3f\n", config.travelSpeed(), finalPositionBelt.x,
+					finalPositionBelt.y));
 			writer.close();
 		} catch (IOException e) {
 			e.printStackTrace();

@@ -2,9 +2,6 @@ import com.google.auto.value.AutoValue;
 
 @AutoValue
 public abstract class GcodeConfig {
-	abstract double offsetX();
-	abstract double offsetY();
-	
 	abstract double drawSpeed();
 	abstract double travelSpeed();
 	
@@ -18,8 +15,6 @@ public abstract class GcodeConfig {
 	
 	@AutoValue.Builder
 	public abstract static class Builder {
-		abstract Builder setOffsetX(double value);
-		abstract Builder setOffsetY(double value);
 		abstract Builder setDrawSpeed(double value);
 		abstract Builder setTravelSpeed(double value);
 		abstract Builder setPenDown(double value);
