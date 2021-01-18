@@ -57,7 +57,8 @@ public class CanvasViewer extends PApplet {
 	private static final double canvasTopY = machineHeight - canvasHeight - 7 * MM_PER_INCH;
 	private static final double canvasBottomY = canvasTopY + canvasHeight;
 
-	private final double maxLineSegmentLength = 2;
+	// This is the longest length of a straight line segment, in mm
+	private final double maxLineSegmentLength = 0.2;
 
 	private static final Point homingLR = new Point(923, 918);
 
@@ -399,9 +400,7 @@ public class CanvasViewer extends PApplet {
 	}
 
 	private static String penDownGcode(GcodeConfig config) {
-		// return String.format("G01 F%f Z%f ; Pen down\nG04 P0.1 ; Delay for 0.1s\n",
-		// 200.0, -0.85);
-		return String.format("G01 F%f Z%f ; Pen down\nG04 P0.1 ; Delay for 0.1s\n", config.penSpeed(),
+		return String.format("G04 P0.1 ; Delay for 0.1s\nG01 F%f Z%f ; Pen down\n", config.penSpeed(),
 				config.penDown());
 	}
 
@@ -482,14 +481,15 @@ public class CanvasViewer extends PApplet {
 			// Prime line
 			ArrayList<Point> primeLine = new ArrayList<>();
 			primeLine.add(new Point(0, 0));
-			primeLine.add(new Point(50, 0));
+			primeLine.add(new Point(20, 0));
 			primeLine.add(new Point(0, 0));
-			primeLine.add(new Point(50, 0));
+			primeLine.add(new Point(20, 0));
 			lines.add(0, primeLine);
 
 			for (int i = 0; i < lines.size(); i++) {
 				writer.append("\n");
 				List<Point> points = lines.get(i);
+				writer.append(String.format("; Line %d\n", i - 1));
 				for (int j = 0; j < points.size(); j++) {
 					Point machinePoint = points.get(j).translate(canvasLeftX, canvasTopY).translate(offsetX, offsetY);
 					if (machinePoint.x > canvasRightX || machinePoint.x < canvasLeftX) {
@@ -522,8 +522,9 @@ public class CanvasViewer extends PApplet {
 				if (i < lines.size() - 1) {
 					Point lastPoint = points.get(points.size() - 1);
 					Point nextPoint = lines.get(i + 1).get(0);
+					double samePointThreshold = lineWidth / 3;
 
-					if (Math.abs(nextPoint.x - lastPoint.x) < .01 && Math.abs(nextPoint.y - lastPoint.y) < .01) {
+					if (Math.abs(nextPoint.x - lastPoint.x) < samePointThreshold && Math.abs(nextPoint.y - lastPoint.y) < samePointThreshold) {
 						// Keep pen down
 						penDown = true;
 					} else {
