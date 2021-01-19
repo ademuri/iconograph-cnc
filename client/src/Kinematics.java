@@ -5,7 +5,7 @@ import org.apache.commons.math3.linear.RealVector;
 
 public class Kinematics {
 	// TODO: create a builder for a class and make these parameters
-	final double h3 = 25; // Center of mass distance from pen?
+	final double h3 = 40; // Center of mass distance from pen?
 	final double r = 20 * 2 / (2 * Math.PI); // Pulley radius: 20 teeth, 2mm pitch
 	final double h = 24.4; // Distance from belt support center to pen center
 	final double theta = 55; // Angle between belt support points and line to pen center

@@ -50,11 +50,11 @@ public class CanvasViewer extends PApplet {
 	// private static final double canvasWidth = 15.5 * MM_PER_INCH;
 	private static final double canvasWidth = 14 * MM_PER_INCH;
 	private static final double canvasHeight = 10 * MM_PER_INCH;
-	private static final double machineWidth = 43 * MM_PER_INCH;
+	private static final double machineWidth = 1076;
 	private static final double machineHeight = 24.5 * MM_PER_INCH;
 	private static final double canvasLeftX = (machineWidth - canvasWidth) / 2;
 	private static final double canvasRightX = canvasLeftX + canvasWidth;
-	private static final double canvasTopY = machineHeight - canvasHeight - 7 * MM_PER_INCH;
+	private static final double canvasTopY = machineHeight - canvasHeight - 6 * MM_PER_INCH;
 	private static final double canvasBottomY = canvasTopY + canvasHeight;
 
 	// This is the longest length of a straight line segment, in mm
@@ -208,6 +208,20 @@ public class CanvasViewer extends PApplet {
 				lines.add(new ArrayList<>(List.of(new Point(canvasWidth - 20, 20 + offset),
 						new Point(canvasWidth - 20, 20 + offset + step))));
 			}
+			slider.getControl().setNumberOfTickMarks(lines.size() + 1).setRange(0, lines.size()).setValue(lines.size());
+		}
+	}
+	
+	public void createKinematicsCalibration() {
+		synchronized (this) {
+			lines = new ArrayList<>();
+			lines.add(new ArrayList<>(List.of(new Point(0, 10), new Point(canvasWidth, 10))));
+			lines.add(new ArrayList<>(List.of(new Point(canvasWidth, 0), new Point(canvasWidth, canvasHeight))));
+			lines.add(new ArrayList<>(List.of(new Point(canvasWidth, canvasHeight - 10), new Point(0, canvasHeight - 10))));
+			lines.add(new ArrayList<>(List.of(new Point(0, canvasHeight), new Point(0, 0))));
+			
+			lines = interpolatePoints(lines);
+		
 			slider.getControl().setNumberOfTickMarks(lines.size() + 1).setRange(0, lines.size()).setValue(lines.size());
 		}
 	}
@@ -462,6 +476,34 @@ public class CanvasViewer extends PApplet {
 			points.add(prevPoint);
 		}
 		return points;
+	}
+	
+	private List<List<Point>> interpolatePoints(List<List<Point>> lines) {
+		List<List<Point>> ret = new ArrayList<>();
+		
+		for (List<Point> points : lines) {
+			if (points.size() < 2) {
+				throw new IllegalArgumentException("Can't interpolate over less than two points: " + points.toString());
+			}
+			List<Point> interpolated = new ArrayList<>();
+			interpolated.add(points.get(0));
+			for (int i = 1; i < points.size(); i++) {
+				Point point = points.get(i);
+				Point prevPoint = points.get(i - 1);
+				double xDelta = point.x - prevPoint.x;
+				double yDelta = point.y - prevPoint.y;
+				double length = Math.sqrt(Math.pow(xDelta, 2) + Math.pow(yDelta, 2));
+				double steps = Math.ceil(length / maxLineSegmentLength);
+				for (int step = 1; step < steps; step++) {
+					Point interpolatedPoint = new Point(prevPoint.x + xDelta * step / steps,
+							prevPoint.y + yDelta * step / steps);
+					interpolated.add(interpolatedPoint);
+				}
+			}
+			ret.add(interpolated);
+		}
+		
+		return ret;
 	}
 
 	private Point machineToBeltPoint(Point machinePoint) {

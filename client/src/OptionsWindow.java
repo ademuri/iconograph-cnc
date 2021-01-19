@@ -236,6 +236,16 @@ public class OptionsWindow extends JFrame implements KeyListener {
 			canvasViewer.createConsistencyTest();
 		});
 		panel_8.add(btnCalAlignment);
+		
+		JButton btnKinematicsCalibration = new JButton("Kinematics");
+		btnKinematicsCalibration.setFont(defaultFont);
+		btnKinematicsCalibration.addActionListener(event -> {
+			canvasViewer.createKinematicsCalibration();
+		});
+		JPanel panel_9 = new JPanel();
+		calPanel.add(panel_9);
+		panel_9.add(btnKinematicsCalibration);
+		
 		addKeyListener(this);
 		setLocationRight();
 
