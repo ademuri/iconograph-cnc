@@ -10,6 +10,7 @@ public class Client {
 		CanvasViewer canvasViewer = new CanvasViewer();
 		OptionsWindow optionsWindow = new OptionsWindow(canvasViewer);
 		canvasViewer.setSize(optionsWindow.getProcessingWidth(), optionsWindow.getProcessingHeight());
+		canvasViewer.setOptionsWindow(optionsWindow);
 
 		PApplet.runSketch(processingArgs, canvasViewer);
 		canvasViewer.setLocation(optionsWindow.getLeftBound(), optionsWindow.getUpperBound());

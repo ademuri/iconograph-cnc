@@ -80,6 +80,7 @@ public class CanvasViewer extends PApplet {
 	private double offsetY = 0;
 	private double lineWidth = 1;
 	private Element svgRootElement;
+	private OptionsWindow optionsWindow = null;
 
 	public void setSize(int width, int height) {
 		windowX = width;
@@ -377,6 +378,31 @@ public class CanvasViewer extends PApplet {
 			exit();
 		}
 	}
+	
+	private int mouseStartX = 0;
+	private int mouseStartY = 0;
+	public void mousePressed() {
+		if (mouseX > canvasStart.x && mouseX < canvasStart.x + canvasWidth * canvasScale
+				&& mouseY > canvasStart.y && mouseY < canvasStart.y + canvasHeight * canvasScale) {
+			mouseStartX = mouseX;
+			mouseStartY = mouseY;
+		}
+	}
+	
+	public void mouseDragged() {
+		if (mouseX > canvasStart.x && mouseX < canvasStart.x + canvasWidth * canvasScale
+				&& mouseY > canvasStart.y && mouseY < canvasStart.y + canvasHeight * canvasScale) {
+			offsetX = offsetX + mouseX - mouseStartX;
+			offsetY = offsetY + mouseY - mouseStartY;
+			mouseStartX = mouseX;
+			mouseStartY = mouseY;
+			
+			if (optionsWindow != null) {
+				optionsWindow.setOffsetX(offsetX);
+				optionsWindow.setOffsetY(offsetY);
+			}
+		}
+	}
 
 	public void sliderChanged(ControlEvent arg0) {
 		int sliderValue = (int) arg0.getValue();
@@ -403,6 +429,10 @@ public class CanvasViewer extends PApplet {
 	public void setLineWidth(String w) {
 		lineWidth = parseDoubleOrDefault(w, lineWidth);
 		redraw();
+	}
+	
+	public void setOptionsWindow(OptionsWindow optionsWindow) {
+		this.optionsWindow = optionsWindow;
 	}
 
 	public double getScaleX() {
