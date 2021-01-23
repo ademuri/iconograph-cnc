@@ -401,7 +401,7 @@ public class CanvasViewer extends PApplet {
 	}
 
 	public void setLineWidth(String w) {
-		lineWidth = parseDoubleOrDefault(w, 1);
+		lineWidth = parseDoubleOrDefault(w, lineWidth);
 		redraw();
 	}
 
@@ -414,12 +414,12 @@ public class CanvasViewer extends PApplet {
 	}
 
 	private static String penDownGcode(GcodeConfig config) {
-		return String.format("G04 P0.1 ; Delay for 0.1s\nG01 F%f Z%f ; Pen down\n", config.penSpeed(),
+		return String.format("G04 P0.1 ; Delay for 0.1s\nG01 F%.1f Z%.3f ; Pen down\n", config.penSpeed(),
 				config.penDown());
 	}
 
 	private static String penUpGcode(GcodeConfig config) {
-		return String.format("G01 F%f Z%f ; Pen up\n", config.penSpeed(), config.penUp());
+		return String.format("G01 F%.1f Z%.3f ; Pen up\n", config.penSpeed(), config.penUp());
 	}
 
 	private List<Point> pathToPoints(SVGOMPathElement path) {
@@ -551,12 +551,12 @@ public class CanvasViewer extends PApplet {
 					} else {
 						Point beltPoint = machineToBeltPoint(machinePoint);
 						if (!penDown) {
-							writer.append(String.format("G01 F%f X%.3f Y%.3f\n", config.travelSpeed(), beltPoint.x,
+							writer.append(String.format("G01 F%.0f X%.3f Y%.3f\n", config.travelSpeed(), beltPoint.x,
 									beltPoint.y));
 							writer.append(penDownGcode(config));
 							penDown = true;
 						} else {
-							writer.append(String.format("G01 F%f X%.3f Y%.3f\n", config.drawSpeed(), beltPoint.x,
+							writer.append(String.format("G01 F%.0f X%.3f Y%.3f\n", config.drawSpeed(), beltPoint.x,
 									beltPoint.y));
 						}
 					}

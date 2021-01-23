@@ -178,6 +178,12 @@ public class OptionsWindow extends JFrame implements KeyListener {
 
 		lineWidth = new TextInput("Line Width", defaultFont, "2");
 		lineWidth.setConfig(ini, SECTION_DRAWING, "line_width");
+		lineWidth.getInput().addFocusListener(new FocusAdapter() {
+			@Override
+			public void focusLost(FocusEvent e) {
+				canvasViewer.setLineWidth(lineWidth.getInput().getText());
+			}
+		});
 		drawingPanel.add(lineWidth);
 
 		penConfig = new JPanel();
