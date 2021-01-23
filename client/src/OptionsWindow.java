@@ -312,6 +312,14 @@ public class OptionsWindow extends JFrame implements KeyListener {
 	public void setOffsetY(double value) {
 		this.offsetY.getInput().setText(String.format("%.1f", value));
 	}
+	
+	public void setScaleX(double value) {
+		this.scaleX.getInput().setText(String.format("%.2f", value));
+	}
+	
+	public void setScaleY(double value) {
+		this.scaleY.getInput().setText(String.format("%.2f", value));
+	}
 
 	@Override
 	public void keyPressed(KeyEvent event) {

@@ -29,6 +29,7 @@ import controlP5.ControlP5;
 import controlP5.Slider;
 import processing.core.PApplet;
 import processing.core.PVector;
+import processing.event.MouseEvent;
 
 public class CanvasViewer extends PApplet {
 	// Develop in Eclipse following
@@ -403,6 +404,12 @@ public class CanvasViewer extends PApplet {
 			}
 		}
 	}
+	
+	public void mouseWheel(MouseEvent event) {
+		this.setScale(scaleX + event.getCount() / 20.0, scaleY + event.getCount() / 20.0);
+		optionsWindow.setScaleX(scaleX);
+		optionsWindow.setScaleY(scaleY);
+	}
 
 	public void sliderChanged(ControlEvent arg0) {
 		int sliderValue = (int) arg0.getValue();
@@ -414,8 +421,12 @@ public class CanvasViewer extends PApplet {
 	}
 
 	public void setScale(String x, String y) {
-		scaleX = parseDoubleOrDefault(x, scaleX);
-		scaleY = parseDoubleOrDefault(y, scaleY);
+		setScale(parseDoubleOrDefault(x, scaleX), parseDoubleOrDefault(y, scaleY));
+	}
+	
+	public void setScale(double x, double y) {
+		scaleX = x;
+		scaleY = y;
 		scaleFromSvg();
 		redraw();
 	}
