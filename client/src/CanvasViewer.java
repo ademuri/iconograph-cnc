@@ -227,6 +227,21 @@ public class CanvasViewer extends PApplet {
 			slider.getControl().setNumberOfTickMarks(lines.size() + 1).setRange(0, lines.size()).setValue(lines.size());
 		}
 	}
+	
+	// Draws the canvas outline
+	public void createCornerCalibration() {
+		synchronized (this) {
+			lines = new ArrayList<>();
+			lines.add(new ArrayList<>(List.of(new Point(0, 0), new Point(canvasWidth, 0))));
+			lines.add(new ArrayList<>(List.of(new Point(canvasWidth, 0), new Point(canvasWidth, canvasHeight))));
+			lines.add(new ArrayList<>(List.of(new Point(canvasWidth, canvasHeight), new Point(0, canvasHeight))));
+			lines.add(new ArrayList<>(List.of(new Point(0, canvasHeight), new Point(0, 0))));
+			
+			lines = interpolatePoints(lines);
+		
+			slider.getControl().setNumberOfTickMarks(lines.size() + 1).setRange(0, lines.size()).setValue(lines.size());
+		}
+	}
 
 	private void traverse(Element element) {
 		if (element instanceof SVGGraphicsElement) {

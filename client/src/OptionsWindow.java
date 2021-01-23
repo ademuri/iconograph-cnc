@@ -252,6 +252,15 @@ public class OptionsWindow extends JFrame implements KeyListener {
 		calPanel.add(panel_9);
 		panel_9.add(btnKinematicsCalibration);
 		
+		JButton btnCornerCalibration = new JButton("Corners");
+		btnCornerCalibration.setFont(defaultFont);
+		btnCornerCalibration.addActionListener(event -> {
+			canvasViewer.createCornerCalibration();
+		});
+		JPanel panel_10 = new JPanel();
+		calPanel.add(panel_10);
+		panel_10.add(btnCornerCalibration);
+		
 		addKeyListener(this);
 		setLocationRight();
 
