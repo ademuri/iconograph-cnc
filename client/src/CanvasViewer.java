@@ -60,7 +60,10 @@ public class CanvasViewer extends PApplet {
 	private static final double DEFAULT_ACCELERATION = 100.0;
 
 	// This is the longest length of a straight line segment, in mm
-	private final double maxLineSegmentLength = 0.2;
+	private double maxLineSegmentLength = 0.5;
+	
+	// This is the longest length of a path segment, in mm
+	private double maxPathSegmentLength = 0.2;
 
 	private static final Point homingLR = new Point(923, 918);
 
@@ -163,6 +166,10 @@ public class CanvasViewer extends PApplet {
 	}
 
 	public void scaleFromSvg() {
+		if (svgRootElement == null) {
+			return;
+		}
+		
 		synchronized (this) {
 			lines = new ArrayList<>();
 
@@ -456,6 +463,20 @@ public class CanvasViewer extends PApplet {
 		redraw();
 	}
 	
+	public void setLineSegment(double value) {
+		System.out.format("line: %3.2f\n", value);
+		maxLineSegmentLength = value;
+		scaleFromSvg();
+		redraw();
+	}
+	
+	public void setPathSegment(double value) {
+		System.out.format("path: %3.2f\n", value);
+		maxPathSegmentLength = value;
+		scaleFromSvg();
+		redraw();
+	}
+	
 	public void setOptionsWindow(OptionsWindow optionsWindow) {
 		this.optionsWindow = optionsWindow;
 	}
@@ -485,7 +506,7 @@ public class CanvasViewer extends PApplet {
 		}
 
 		double step = length
-				/ Math.ceil(length * Math.sqrt(Math.pow(scaleX, 2) + Math.pow(scaleY, 2)) / maxLineSegmentLength);
+				/ Math.ceil(length * Math.sqrt(Math.pow(scaleX, 2) + Math.pow(scaleY, 2)) / maxPathSegmentLength);
 		for (double i = 0; i <= length; i += step) {
 			SVGPoint point = path.getPointAtLength((float) i);
 			try {

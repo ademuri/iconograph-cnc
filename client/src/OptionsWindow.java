@@ -50,6 +50,8 @@ public class OptionsWindow extends JFrame implements KeyListener {
 	private TextInput penUp;
 	private TextInput penSpeed;
 	private TextInput lineWidth;
+	private TextInput lineSegment;
+	private TextInput pathSegment;
 	private TextInput acceleration;
 
 	private final int processingWidth;
@@ -182,12 +184,34 @@ public class OptionsWindow extends JFrame implements KeyListener {
 		lineWidth.getInput().addFocusListener(new FocusAdapter() {
 			@Override
 			public void focusLost(FocusEvent e) {
-				canvasViewer.setLineWidth(lineWidth.getInput().getText());
+				setLineWidth();
 			}
 		});
 		drawingPanel.add(lineWidth);
 		
-		acceleration = new TextInput("X/Y axis acceleration, mm/sec2", defaultFont, "40");
+		lineSegment = new TextInput("Line Segment", defaultFont, "0.5");
+		lineSegment.setConfig(ini, SECTION_DRAWING, "line_segment");
+		lineSegment.setToolTipText("The interpolation length for straight lines, in mm");
+		lineSegment.getInput().addFocusListener(new FocusAdapter() {
+			@Override
+			public void focusLost(FocusEvent e) {
+				setLineSegment();
+			}
+		});
+		drawingPanel.add(lineSegment);
+		
+		pathSegment = new TextInput("Path Segment", defaultFont, "0.2");
+		pathSegment.setConfig(ini, SECTION_DRAWING, "path_segment");
+		pathSegment.setToolTipText("The interpolation length for paths (curved lines), in mm");
+		pathSegment.getInput().addFocusListener(new FocusAdapter() {
+			@Override
+			public void focusLost(FocusEvent e) {
+				setPathSegment();
+			}
+		});
+		drawingPanel.add(pathSegment);
+		
+		acceleration = new TextInput("X/Y acceleration, mm/sec2", defaultFont, "40");
 		acceleration.setConfig(ini, SECTION_DRAWING, "acceleration");
 		drawingPanel.add(acceleration);
 
@@ -278,6 +302,8 @@ public class OptionsWindow extends JFrame implements KeyListener {
 		upperBound = bounds.y + insets.top;
 
 		setLineWidth();
+		setLineSegment();
+		setPathSegment();
 
 		Preferences prefs = Preferences.userRoot().node(getClass().getName());
 		if (!prefs.get(LAST_DIR_SVG, "").isEmpty()) {
@@ -341,6 +367,9 @@ public class OptionsWindow extends JFrame implements KeyListener {
 			drawSpeed.saveToIni();
 			travelSpeed.saveToIni();
 			lineWidth.saveToIni();
+			lineSegment.saveToIni();
+			pathSegment.saveToIni();
+			acceleration.saveToIni();
 			System.exit(0);
 		}
 	}
@@ -363,6 +392,14 @@ public class OptionsWindow extends JFrame implements KeyListener {
 
 	private void setLineWidth() {
 		canvasViewer.setLineWidth(lineWidth.getInput().getText());
+	}
+	
+	private void setLineSegment() {
+		canvasViewer.setLineSegment(Double.parseDouble(lineSegment.getInput().getText()));
+	}
+	
+	private void setPathSegment() {
+		canvasViewer.setPathSegment(Double.parseDouble(pathSegment.getInput().getText()));
 	}
 
 	private void doGenerateGcode() {
