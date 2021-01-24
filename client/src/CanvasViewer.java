@@ -47,15 +47,13 @@ public class CanvasViewer extends PApplet {
 
 	// Note: all physical distances are in millimeters
 	private static final double MM_PER_INCH = 25.4;
-	// private static final double canvasWidth = 18 * MM_PER_INCH;
-	// private static final double canvasWidth = 15.5 * MM_PER_INCH;
 	private static final double canvasWidth = 14 * MM_PER_INCH;
 	private static final double canvasHeight = 10 * MM_PER_INCH;
 	private static final double machineWidth = 1076;
 	private static final double machineHeight = 24.5 * MM_PER_INCH;
 	private static final double canvasLeftX = (machineWidth - canvasWidth) / 2;
 	private static final double canvasRightX = canvasLeftX + canvasWidth;
-	private static final double canvasTopY = machineHeight - canvasHeight - 6 * MM_PER_INCH;
+	private static final double canvasTopY = machineHeight - canvasHeight - 5.5 * MM_PER_INCH;
 	private static final double canvasBottomY = canvasTopY + canvasHeight;
 
 	// This is the longest length of a straight line segment, in mm
@@ -194,8 +192,6 @@ public class CanvasViewer extends PApplet {
 					lines.add(new ArrayList<>(List.of(new Point(x, y - length / 2), new Point(x, y + length / 2))));
 				}
 			}
-			lines.add(new ArrayList<>(List.of(new Point(0, 0), new Point(canvasWidth, 0),
-					new Point(canvasWidth, canvasHeight), new Point(0, canvasHeight), new Point(0, 0))));
 			slider.getControl().setNumberOfTickMarks(lines.size() + 1).setRange(0, lines.size()).setValue(lines.size());
 		}
 	}
