@@ -50,6 +50,7 @@ public class OptionsWindow extends JFrame implements KeyListener {
 	private TextInput penUp;
 	private TextInput penSpeed;
 	private TextInput lineWidth;
+	private TextInput acceleration;
 
 	private final int processingWidth;
 	private final int processingHeight;
@@ -94,7 +95,7 @@ public class OptionsWindow extends JFrame implements KeyListener {
 		Font defaultFont = new Font("Dialog", Font.PLAIN, getTextSize());
 
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		setBounds(100, 100, (int) (450 * monitorScale), (int) (800 * monitorScale));
+		setBounds(100, 100, (int) (450 * monitorScale), (int) (900 * monitorScale));
 		contentPane = new JPanel();
 		contentPane.setBorder(new EmptyBorder(5, 5, 5, 5));
 		setContentPane(contentPane);
@@ -185,6 +186,10 @@ public class OptionsWindow extends JFrame implements KeyListener {
 			}
 		});
 		drawingPanel.add(lineWidth);
+		
+		acceleration = new TextInput("X/Y axis acceleration, mm/sec2", defaultFont, "40");
+		acceleration.setConfig(ini, SECTION_DRAWING, "acceleration");
+		drawingPanel.add(acceleration);
 
 		penConfig = new JPanel();
 		penConfig.setBorder(new LineBorder(new Color(0, 0, 0)));
@@ -363,6 +368,7 @@ public class OptionsWindow extends JFrame implements KeyListener {
 	private void doGenerateGcode() {
 		GcodeConfig config = GcodeConfig.builder().setDrawSpeed(Double.parseDouble(drawSpeed.getInput().getText()))
 				.setTravelSpeed(Double.parseDouble(travelSpeed.getInput().getText()))
+				.setAcceleration(Double.parseDouble(acceleration.getInput().getText()))
 				.setPenDown(Double.parseDouble(penDown.getInput().getText()))
 				.setPenUp(Double.parseDouble(penUp.getInput().getText()))
 				.setPenSpeed(Double.parseDouble(penSpeed.getInput().getText())).build();

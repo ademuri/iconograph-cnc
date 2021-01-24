@@ -53,8 +53,11 @@ public class CanvasViewer extends PApplet {
 	private static final double machineHeight = 24.5 * MM_PER_INCH;
 	private static final double canvasLeftX = (machineWidth - canvasWidth) / 2;
 	private static final double canvasRightX = canvasLeftX + canvasWidth;
-	private static final double canvasTopY = machineHeight - canvasHeight - 5.5 * MM_PER_INCH;
+	private static final double canvasTopY = machineHeight - canvasHeight - 7 * MM_PER_INCH;
 	private static final double canvasBottomY = canvasTopY + canvasHeight;
+	
+	// Default acceleration used for non-drawing jogging, in mm/sec2
+	private static final double DEFAULT_ACCELERATION = 100.0;
 
 	// This is the longest length of a straight line segment, in mm
 	private final double maxLineSegmentLength = 0.2;
@@ -567,7 +570,10 @@ public class CanvasViewer extends PApplet {
 	public void generateGcode(GcodeConfig config) {
 		try {
 			BufferedWriter writer = Files.newBufferedWriter(Path.of("out.gcode"));
-			writer.append("G90 ; Absolute positioning\n\n");
+			writer.append("G90 ; Absolute positioning\n");
+			writer.append(String.format("$120=%.2f ; X-Axis acceleration\n", config.acceleration()));
+			writer.append(String.format("$121=%.2f ; Y-Axis acceleration\n", config.acceleration()));
+			writer.append("\n");
 
 			boolean penDown = false;
 			writer.append(penUpGcode(config));
@@ -634,8 +640,11 @@ public class CanvasViewer extends PApplet {
 			writer.append("\n; Final position\n");
 			writer.append(penUpGcode(config));
 			Point finalPositionBelt = machineToBeltPoint(finalPosition);
-			writer.append(String.format("G01 F%f X%.3f Y%.3f\n", config.travelSpeed(), finalPositionBelt.x,
+			writer.append(String.format("G01 F%f X%.3f Y%.3f\n\n", config.travelSpeed(), finalPositionBelt.x,
 					finalPositionBelt.y));
+			
+			writer.append(String.format("$120=%.2f ; X-Axis acceleration\n", DEFAULT_ACCELERATION));
+			writer.append(String.format("$121=%.2f ; Y-Axis acceleration\n\n", DEFAULT_ACCELERATION));
 			writer.close();
 		} catch (IOException e) {
 			e.printStackTrace();
