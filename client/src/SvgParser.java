@@ -2,6 +2,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.batik.anim.dom.SVGGraphicsElement;
+import org.apache.batik.anim.dom.SVGOMCircleElement;
 import org.apache.batik.anim.dom.SVGOMLineElement;
 import org.apache.batik.anim.dom.SVGOMPathElement;
 import org.apache.batik.anim.dom.SVGOMPolylineElement;
@@ -28,6 +29,8 @@ public class SvgParser {
 			return  polylineToPoints((SVGOMPolylineElement) element);
 		} else if (element instanceof SVGOMLineElement) {
 			return lineToPoints((SVGOMLineElement) element);
+		} else if (element instanceof SVGOMCircleElement) {
+			return circleToPoints((SVGOMCircleElement) element);
 		}
 		
 		return List.of();
@@ -71,5 +74,22 @@ public class SvgParser {
 		Point start = new Point(line.getX1().getBaseVal().getValue() * scaleX, line.getY1().getBaseVal().getValue() * scaleY);
 		Point end = new Point(line.getX2().getBaseVal().getValue() * scaleX, line.getY2().getBaseVal().getValue() * scaleY);
 		return Point.interpolatePoints(List.of(start, end), maxLineSegmentLength);
+	}
+	
+	private List<Point> circleToPoints(SVGOMCircleElement circle) {
+		List<Point> points = new ArrayList<>();
+		double x = circle.getCx().getBaseVal().getValue();
+		double y = circle.getCy().getBaseVal().getValue();
+		double r = circle.getR().getBaseVal().getValue();
+		
+		double minScale = Math.min(scaleX, scaleY);
+		double minCircumference = minScale * 2 * r * Math.PI;
+		double angleStep = 2 * Math.PI * maxPathSegmentLength / minCircumference;
+		
+		for (double angle = 0; angle <= 2 * Math.PI; angle += angleStep) {
+			points.add(new Point(scaleX * (x + r * Math.cos(angle)), scaleY * (y + r * Math.sin(angle))));
+		}
+		
+		return points;
 	}
 }
