@@ -14,6 +14,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.List;
 import java.util.prefs.Preferences;
 
 import javax.swing.BoxLayout;
@@ -26,10 +27,14 @@ import javax.swing.JTabbedPane;
 import javax.swing.JTextField;
 import javax.swing.border.EmptyBorder;
 
+import org.apache.commons.io.filefilter.SuffixFileFilter;
 import org.ini4j.Ini;
 import org.ini4j.InvalidFileFormatException;
 import org.ini4j.Profile.Section;
 import javax.swing.border.LineBorder;
+import javax.swing.filechooser.FileFilter;
+import javax.swing.filechooser.FileNameExtensionFilter;
+
 import java.awt.Color;
 import javax.swing.SwingConstants;
 
@@ -120,6 +125,9 @@ public class OptionsWindow extends JFrame implements KeyListener {
 		btnLoadSvg.addActionListener(event -> {
 			setFontSize(fileChooser.getComponents());
 			fileChooser.setPreferredSize(new Dimension(getProcessingWidth(), getProcessingHeight()));
+			FileFilter svgFilter = new FileNameExtensionFilter("SVG files", "svg");
+			fileChooser.addChoosableFileFilter(svgFilter);
+			fileChooser.setFileFilter(svgFilter);
 			int r = fileChooser.showOpenDialog(this);
 			if (r == JFileChooser.APPROVE_OPTION) {
 				canvasViewer.loadSvg(fileChooser.getSelectedFile().getAbsolutePath());
