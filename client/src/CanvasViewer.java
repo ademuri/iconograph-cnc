@@ -144,12 +144,9 @@ public class CanvasViewer extends PApplet {
 		// Enable CSS- and SVG-specific enhancements.
 		(new GVTBuilder()).build(bridgeContext, doc);
 
-		// Needed so that draw() isn't called in the middle of updating
 		svgRootElement = doc.getDocumentElement();
 		SVGLength width = ((SVGOMSVGElement) svgRootElement).getWidth().getBaseVal();
-		//width.convertToSpecifiedUnits(SVGLength.SVG_LENGTHTYPE_MM);
 		SVGLength height = ((SVGOMSVGElement) svgRootElement).getHeight().getBaseVal();
-		//height.convertToSpecifiedUnits(SVGLength.SVG_LENGTHTYPE_MM);
 
 		double scale = 1;
 		double svgWidth = width.getValueInSpecifiedUnits();
