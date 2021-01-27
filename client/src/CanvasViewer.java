@@ -56,13 +56,13 @@ public class CanvasViewer extends PApplet {
 	private static final double canvasRightX = canvasLeftX + canvasWidth;
 	private static final double canvasTopY = machineHeight - canvasHeight - 7 * MM_PER_INCH;
 	private static final double canvasBottomY = canvasTopY + canvasHeight;
-	
+
 	// Default acceleration used for non-drawing jogging, in mm/sec2
 	private static final double DEFAULT_ACCELERATION = 100.0;
 
 	// This is the longest length of a straight line segment, in mm
 	private double maxLineSegmentLength = 0.5;
-	
+
 	// This is the longest length of a path segment, in mm
 	private double maxPathSegmentLength = 0.2;
 
@@ -172,7 +172,7 @@ public class CanvasViewer extends PApplet {
 		if (svgRootElement == null) {
 			return;
 		}
-		
+
 		synchronized (this) {
 			lines = new ArrayList<>();
 
@@ -222,21 +222,22 @@ public class CanvasViewer extends PApplet {
 			slider.getControl().setNumberOfTickMarks(lines.size() + 1).setRange(0, lines.size()).setValue(lines.size());
 		}
 	}
-	
+
 	public void createKinematicsCalibration() {
 		synchronized (this) {
 			lines = new ArrayList<>();
 			lines.add(new ArrayList<>(List.of(new Point(0, 10), new Point(canvasWidth, 10))));
 			lines.add(new ArrayList<>(List.of(new Point(canvasWidth, 0), new Point(canvasWidth, canvasHeight))));
-			lines.add(new ArrayList<>(List.of(new Point(canvasWidth, canvasHeight - 10), new Point(0, canvasHeight - 10))));
+			lines.add(new ArrayList<>(
+					List.of(new Point(canvasWidth, canvasHeight - 10), new Point(0, canvasHeight - 10))));
 			lines.add(new ArrayList<>(List.of(new Point(0, canvasHeight), new Point(0, 0))));
-			
+
 			lines = interpolateLines(lines);
-		
+
 			slider.getControl().setNumberOfTickMarks(lines.size() + 1).setRange(0, lines.size()).setValue(lines.size());
 		}
 	}
-	
+
 	// Draws the canvas outline
 	public void createCornerCalibration() {
 		synchronized (this) {
@@ -245,9 +246,9 @@ public class CanvasViewer extends PApplet {
 			lines.add(new ArrayList<>(List.of(new Point(canvasWidth, 0), new Point(canvasWidth, canvasHeight))));
 			lines.add(new ArrayList<>(List.of(new Point(canvasWidth, canvasHeight), new Point(0, canvasHeight))));
 			lines.add(new ArrayList<>(List.of(new Point(0, canvasHeight), new Point(0, 0))));
-			
+
 			lines = interpolateLines(lines);
-		
+
 			slider.getControl().setNumberOfTickMarks(lines.size() + 1).setRange(0, lines.size()).setValue(lines.size());
 		}
 	}
@@ -284,7 +285,7 @@ public class CanvasViewer extends PApplet {
 		if (lines.isEmpty()) {
 			return lines;
 		}
-		
+
 		List<List<Point>> sorted = new ArrayList<>();
 		List<List<Point>> startXSorted = new ArrayList<>();
 		startXSorted.addAll(lines);
@@ -412,32 +413,33 @@ public class CanvasViewer extends PApplet {
 			exit();
 		}
 	}
-	
+
 	private int mouseStartX = 0;
 	private int mouseStartY = 0;
+
 	public void mousePressed() {
-		if (mouseX > canvasStart.x && mouseX < canvasStart.x + canvasWidth * canvasScale
-				&& mouseY > canvasStart.y && mouseY < canvasStart.y + canvasHeight * canvasScale) {
+		if (mouseX > canvasStart.x && mouseX < canvasStart.x + canvasWidth * canvasScale && mouseY > canvasStart.y
+				&& mouseY < canvasStart.y + canvasHeight * canvasScale) {
 			mouseStartX = mouseX;
 			mouseStartY = mouseY;
 		}
 	}
-	
+
 	public void mouseDragged() {
-		if (mouseX > canvasStart.x && mouseX < canvasStart.x + canvasWidth * canvasScale
-				&& mouseY > canvasStart.y && mouseY < canvasStart.y + canvasHeight * canvasScale) {
+		if (mouseX > canvasStart.x && mouseX < canvasStart.x + canvasWidth * canvasScale && mouseY > canvasStart.y
+				&& mouseY < canvasStart.y + canvasHeight * canvasScale) {
 			offsetX = offsetX + mouseX - mouseStartX;
 			offsetY = offsetY + mouseY - mouseStartY;
 			mouseStartX = mouseX;
 			mouseStartY = mouseY;
-			
+
 			if (optionsWindow != null) {
 				optionsWindow.setOffsetX(offsetX);
 				optionsWindow.setOffsetY(offsetY);
 			}
 		}
 	}
-	
+
 	public void mouseWheel(MouseEvent event) {
 		this.setScale(scaleX + event.getCount() / 20.0, scaleY + event.getCount() / 20.0);
 		optionsWindow.setScaleX(scaleX);
@@ -456,7 +458,7 @@ public class CanvasViewer extends PApplet {
 	public void setScale(String x, String y) {
 		setScale(parseDoubleOrDefault(x, scaleX), parseDoubleOrDefault(y, scaleY));
 	}
-	
+
 	public void setScale(double x, double y) {
 		scaleX = x;
 		scaleY = y;
@@ -474,19 +476,19 @@ public class CanvasViewer extends PApplet {
 		lineWidth = parseDoubleOrDefault(w, lineWidth);
 		redraw();
 	}
-	
+
 	public void setLineSegment(double value) {
 		maxLineSegmentLength = value;
 		scaleFromSvg();
 		redraw();
 	}
-	
+
 	public void setPathSegment(double value) {
 		maxPathSegmentLength = value;
 		scaleFromSvg();
 		redraw();
 	}
-	
+
 	public void setOptionsWindow(OptionsWindow optionsWindow) {
 		this.optionsWindow = optionsWindow;
 	}
@@ -541,13 +543,15 @@ public class CanvasViewer extends PApplet {
 		}
 		return interpolatePoints(points, maxLineSegmentLength);
 	}
-	
+
 	private List<Point> lineToPoints(SVGOMLineElement line) {
-		Point start = new Point(line.getX1().getBaseVal().getValue() * scaleX, line.getY1().getBaseVal().getValue() * scaleY);
-		Point end = new Point(line.getX2().getBaseVal().getValue() * scaleX, line.getY2().getBaseVal().getValue() * scaleY);
+		Point start = new Point(line.getX1().getBaseVal().getValue() * scaleX,
+				line.getY1().getBaseVal().getValue() * scaleY);
+		Point end = new Point(line.getX2().getBaseVal().getValue() * scaleX,
+				line.getY2().getBaseVal().getValue() * scaleY);
 		return interpolatePoints(List.of(start, end), maxLineSegmentLength);
 	}
-	
+
 	private List<Point> interpolatePoints(List<Point> points, double maxSegmentLength) {
 		if (points.size() < 2) {
 			throw new IllegalArgumentException("Can't interpolate over less than two points: " + points.toString());
@@ -567,17 +571,17 @@ public class CanvasViewer extends PApplet {
 				interpolated.add(interpolatedPoint);
 			}
 		}
-		
+
 		return interpolated;
 	}
-	
+
 	private List<List<Point>> interpolateLines(List<List<Point>> lines) {
 		List<List<Point>> ret = new ArrayList<>();
-		
+
 		for (List<Point> points : lines) {
 			ret.add(interpolatePoints(points, maxLineSegmentLength));
 		}
-		
+
 		return ret;
 	}
 
@@ -644,7 +648,8 @@ public class CanvasViewer extends PApplet {
 					Point nextPoint = lines.get(i + 1).get(0);
 					double samePointThreshold = lineWidth / 3;
 
-					if (Math.abs(nextPoint.x - lastPoint.x) < samePointThreshold && Math.abs(nextPoint.y - lastPoint.y) < samePointThreshold) {
+					if (Math.abs(nextPoint.x - lastPoint.x) < samePointThreshold
+							&& Math.abs(nextPoint.y - lastPoint.y) < samePointThreshold) {
 						// Keep pen down
 						penDown = true;
 					} else {
@@ -662,7 +667,7 @@ public class CanvasViewer extends PApplet {
 			Point finalPositionBelt = machineToBeltPoint(finalPosition);
 			writer.append(String.format("G01 F%f X%.3f Y%.3f\n\n", config.travelSpeed(), finalPositionBelt.x,
 					finalPositionBelt.y));
-			
+
 			writer.append(String.format("$120=%.2f ; X-Axis acceleration\n", DEFAULT_ACCELERATION));
 			writer.append(String.format("$121=%.2f ; Y-Axis acceleration\n\n", DEFAULT_ACCELERATION));
 			writer.close();
