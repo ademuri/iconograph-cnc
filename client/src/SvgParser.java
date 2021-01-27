@@ -14,25 +14,25 @@ public class SvgParser {
 	private final double scaleY;
 	private final double maxPathSegmentLength;
 	private final double maxLineSegmentLength;
-	
+
 	public SvgParser(double scaleX, double scaleY, double maxPathSegmentLength, double maxLineSegmentLength) {
 		this.scaleX = scaleX;
 		this.scaleY = scaleY;
 		this.maxPathSegmentLength = maxPathSegmentLength;
 		this.maxLineSegmentLength = maxLineSegmentLength;
 	}
-	
+
 	List<Point> parse(SVGGraphicsElement element) {
 		if (element instanceof SVGOMPathElement) {
 			return pathToPoints((SVGOMPathElement) element);
 		} else if (element instanceof SVGOMPolylineElement) {
-			return  polylineToPoints((SVGOMPolylineElement) element);
+			return polylineToPoints((SVGOMPolylineElement) element);
 		} else if (element instanceof SVGOMLineElement) {
 			return lineToPoints((SVGOMLineElement) element);
 		} else if (element instanceof SVGOMCircleElement) {
 			return circleToPoints((SVGOMCircleElement) element);
 		}
-		
+
 		return List.of();
 	}
 
@@ -69,27 +69,29 @@ public class SvgParser {
 		}
 		return Point.interpolatePoints(points, maxLineSegmentLength);
 	}
-	
+
 	private List<Point> lineToPoints(SVGOMLineElement line) {
-		Point start = new Point(line.getX1().getBaseVal().getValue() * scaleX, line.getY1().getBaseVal().getValue() * scaleY);
-		Point end = new Point(line.getX2().getBaseVal().getValue() * scaleX, line.getY2().getBaseVal().getValue() * scaleY);
+		Point start = new Point(line.getX1().getBaseVal().getValue() * scaleX,
+				line.getY1().getBaseVal().getValue() * scaleY);
+		Point end = new Point(line.getX2().getBaseVal().getValue() * scaleX,
+				line.getY2().getBaseVal().getValue() * scaleY);
 		return Point.interpolatePoints(List.of(start, end), maxLineSegmentLength);
 	}
-	
+
 	private List<Point> circleToPoints(SVGOMCircleElement circle) {
 		List<Point> points = new ArrayList<>();
 		double x = circle.getCx().getBaseVal().getValue();
 		double y = circle.getCy().getBaseVal().getValue();
 		double r = circle.getR().getBaseVal().getValue();
-		
+
 		double minScale = Math.min(scaleX, scaleY);
 		double minCircumference = minScale * 2 * r * Math.PI;
 		double angleStep = 2 * Math.PI * maxPathSegmentLength / minCircumference;
-		
+
 		for (double angle = 0; angle <= 2 * Math.PI; angle += angleStep) {
 			points.add(new Point(scaleX * (x + r * Math.cos(angle)), scaleY * (y + r * Math.sin(angle))));
 		}
-		
+
 		return points;
 	}
 }

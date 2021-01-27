@@ -161,7 +161,7 @@ public class OptionsWindow extends JFrame implements KeyListener {
 				setScale();
 			}
 		});
-		
+
 		offsetX = new TextInput("Offset X", defaultFont, "0");
 		transformPanel.add(offsetX);
 		offsetX.getInput().addFocusListener(new FocusAdapter() {
@@ -196,7 +196,7 @@ public class OptionsWindow extends JFrame implements KeyListener {
 			}
 		});
 		drawingPanel.add(lineWidth);
-		
+
 		lineSegment = new TextInput("Line Segment", defaultFont, "0.5");
 		lineSegment.setConfig(ini, SECTION_DRAWING, "line_segment");
 		lineSegment.setToolTipText("The interpolation length for straight lines, in mm");
@@ -207,7 +207,7 @@ public class OptionsWindow extends JFrame implements KeyListener {
 			}
 		});
 		drawingPanel.add(lineSegment);
-		
+
 		pathSegment = new TextInput("Path Segment", defaultFont, "0.2");
 		pathSegment.setConfig(ini, SECTION_DRAWING, "path_segment");
 		pathSegment.setToolTipText("The interpolation length for paths (curved lines), in mm");
@@ -218,7 +218,7 @@ public class OptionsWindow extends JFrame implements KeyListener {
 			}
 		});
 		drawingPanel.add(pathSegment);
-		
+
 		acceleration = new TextInput("X/Y acceleration, mm/sec2", defaultFont, "40");
 		acceleration.setConfig(ini, SECTION_DRAWING, "acceleration");
 		drawingPanel.add(acceleration);
@@ -279,7 +279,7 @@ public class OptionsWindow extends JFrame implements KeyListener {
 			canvasViewer.createConsistencyTest();
 		});
 		panel_8.add(btnCalAlignment);
-		
+
 		JButton btnKinematicsCalibration = new JButton("Kinematics");
 		btnKinematicsCalibration.setFont(defaultFont);
 		btnKinematicsCalibration.addActionListener(event -> {
@@ -288,7 +288,7 @@ public class OptionsWindow extends JFrame implements KeyListener {
 		JPanel panel_9 = new JPanel();
 		calPanel.add(panel_9);
 		panel_9.add(btnKinematicsCalibration);
-		
+
 		JButton btnCornerCalibration = new JButton("Corners");
 		btnCornerCalibration.setFont(defaultFont);
 		btnCornerCalibration.addActionListener(event -> {
@@ -297,7 +297,7 @@ public class OptionsWindow extends JFrame implements KeyListener {
 		JPanel panel_10 = new JPanel();
 		calPanel.add(panel_10);
 		panel_10.add(btnCornerCalibration);
-		
+
 		addKeyListener(this);
 		setLocationRight();
 
@@ -352,19 +352,19 @@ public class OptionsWindow extends JFrame implements KeyListener {
 	public int getUpperBound() {
 		return upperBound;
 	}
-	
+
 	public void setOffsetX(double value) {
 		this.offsetX.getInput().setText(String.format("%.1f", value));
 	}
-	
+
 	public void setOffsetY(double value) {
 		this.offsetY.getInput().setText(String.format("%.1f", value));
 	}
-	
+
 	public void setScaleX(double value) {
 		this.scaleX.getInput().setText(String.format("%.2f", value));
 	}
-	
+
 	public void setScaleY(double value) {
 		this.scaleY.getInput().setText(String.format("%.2f", value));
 	}
@@ -393,19 +393,20 @@ public class OptionsWindow extends JFrame implements KeyListener {
 	private void setScale() {
 		canvasViewer.setScale(scaleX.getInput().getText(), scaleY.getInput().getText());
 	}
-	
+
 	private void setOffset() {
-		canvasViewer.setOffset(Double.parseDouble(offsetX.getInput().getText()), Double.parseDouble(offsetY.getInput().getText()));
+		canvasViewer.setOffset(Double.parseDouble(offsetX.getInput().getText()),
+				Double.parseDouble(offsetY.getInput().getText()));
 	}
 
 	private void setLineWidth() {
 		canvasViewer.setLineWidth(lineWidth.getInput().getText());
 	}
-	
+
 	private void setLineSegment() {
 		canvasViewer.setLineSegment(Double.parseDouble(lineSegment.getInput().getText()));
 	}
-	
+
 	private void setPathSegment() {
 		canvasViewer.setPathSegment(Double.parseDouble(pathSegment.getInput().getText()));
 	}

@@ -9,7 +9,7 @@ public class Point {
 		this.x = x;
 		this.y = y;
 	}
-	
+
 	public Point translate(double xOffset, double yOffset) {
 		return new Point(x + xOffset, y + yOffset);
 	}
@@ -21,7 +21,7 @@ public class Point {
 	public String toString() {
 		return String.format("(%3.2f, %3.2f)", x, y);
 	}
-	
+
 	public static List<Point> interpolatePoints(List<Point> points, double maxSegmentLength) {
 		if (points.size() < 2) {
 			throw new IllegalArgumentException("Can't interpolate over less than two points: " + points.toString());
@@ -41,17 +41,17 @@ public class Point {
 				interpolated.add(interpolatedPoint);
 			}
 		}
-		
+
 		return interpolated;
 	}
-	
+
 	public static List<List<Point>> interpolateLines(List<List<Point>> lines, double maxSegmentLength) {
 		List<List<Point>> ret = new ArrayList<>();
-		
+
 		for (List<Point> points : lines) {
 			ret.add(interpolatePoints(points, maxSegmentLength));
 		}
-		
+
 		return ret;
 	}
 }

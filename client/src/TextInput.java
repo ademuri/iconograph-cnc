@@ -13,7 +13,7 @@ import org.ini4j.Profile.Section;
 public class TextInput extends JPanel {
 	protected final JTextField input;
 	protected final JLabel label;
-	
+
 	protected Ini ini = null;
 	protected String configSection = "";
 	protected String configName = "";
@@ -35,9 +35,9 @@ public class TextInput extends JPanel {
 	public JTextField getInput() {
 		return input;
 	}
-	
+
 	public void saveToIni() {
-		synchronized(ini) {
+		synchronized (ini) {
 			ini.put(configSection, configName, input.getText());
 			try {
 				ini.store();
@@ -47,23 +47,24 @@ public class TextInput extends JPanel {
 			}
 		}
 	}
-	
+
 	public void setConfig(Ini ini, String configSection, String configName) {
 		if (this.ini != null) {
-			throw new IllegalStateException(String.format("setConfig called multiple times for TextInput %s", label.getText()));
+			throw new IllegalStateException(
+					String.format("setConfig called multiple times for TextInput %s", label.getText()));
 		}
 		this.ini = ini;
 		this.configSection = configSection;
 		this.configName = configName;
-		
+
 		input.setText(ini.get(configSection).getOrDefault(configName, input.getText()));
-		
+
 		this.input.addFocusListener(new FocusListener() {
 			@Override
 			public void focusLost(FocusEvent arg0) {
 				saveToIni();
 			}
-			
+
 			@Override
 			public void focusGained(FocusEvent arg0) {
 			}
