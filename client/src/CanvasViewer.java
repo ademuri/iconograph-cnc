@@ -167,11 +167,12 @@ public class CanvasViewer extends PApplet {
 		scaleY = scale;
 
 		scaleFromSvg();
-		/*
-		if (!lines.isEmpty()) {
-			slider.getControl().setNumberOfTickMarks(lines.size() + 1).setRange(0, lines.size()).setValue(lines.size());
+		int numLines = lineMap.values().stream()
+				.mapToInt(line -> line.size())
+				.reduce(0, (subtotal, size) -> subtotal + size);
+		if (numLines > 0) {
+			slider.getControl().setNumberOfTickMarks(numLines + 1).setRange(0, numLines).setValue(numLines);
 		}
-		*/
 	}
 
 	public void scaleFromSvg() {
@@ -399,12 +400,6 @@ public class CanvasViewer extends PApplet {
 
 	public void draw() {
 		synchronized (this) {
-			/*
-			if (lineMap.isEmpty()) {
-				return;
-			}
-			*/
-
 			clear();
 			background(50, 50, 50);
 			fill(255);
@@ -412,17 +407,16 @@ public class CanvasViewer extends PApplet {
 			rect(canvasStart.x, canvasStart.y, (float) (canvasWidth * canvasScale),
 					(float) (canvasHeight * canvasScale));
 			strokeWeight((float) (lineWidth * canvasScale));
-			/*
-			// Note: sometimes the values don't line up, maybe an SVG parsing problem
-			for (int i = 0; i < slider.getValue() && i < lines.size(); i++) {
-				drawLine(lines.get(i));
-			}
-			*/
+			
+			int lineNumber = 0;
 			for (Map.Entry<Color, List<List<Point>>> entry : lineMap.entrySet()) {
 				Color color = entry.getKey();
 				stroke(color.red(), color.green(), color.blue());
 				for (List<Point> line : entry.getValue()) {
-					drawLine(line);
+					if (slider.getValue() > lineNumber) {
+						drawLine(line);
+					}
+					lineNumber++;
 				}
 			}
 		}
