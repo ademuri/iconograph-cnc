@@ -464,14 +464,12 @@ public class CanvasViewer extends PApplet {
 	}
 	
 	public void setLineSegment(double value) {
-		System.out.format("line: %3.2f\n", value);
 		maxLineSegmentLength = value;
 		scaleFromSvg();
 		redraw();
 	}
 	
 	public void setPathSegment(double value) {
-		System.out.format("path: %3.2f\n", value);
 		maxPathSegmentLength = value;
 		scaleFromSvg();
 		redraw();
