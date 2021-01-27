@@ -8,6 +8,7 @@ import java.util.List;
 
 import org.apache.batik.anim.dom.SAXSVGDocumentFactory;
 import org.apache.batik.anim.dom.SVGGraphicsElement;
+import org.apache.batik.anim.dom.SVGOMLineElement;
 import org.apache.batik.anim.dom.SVGOMPathElement;
 import org.apache.batik.anim.dom.SVGOMPolylineElement;
 import org.apache.batik.anim.dom.SVGOMSVGElement;
@@ -162,7 +163,9 @@ public class CanvasViewer extends PApplet {
 		scaleY = scale;
 
 		scaleFromSvg();
-		slider.getControl().setNumberOfTickMarks(lines.size() + 1).setRange(0, lines.size()).setValue(lines.size());
+		if (!lines.isEmpty()) {
+			slider.getControl().setNumberOfTickMarks(lines.size() + 1).setRange(0, lines.size()).setValue(lines.size());
+		}
 	}
 
 	public void scaleFromSvg() {
@@ -228,7 +231,7 @@ public class CanvasViewer extends PApplet {
 			lines.add(new ArrayList<>(List.of(new Point(canvasWidth, canvasHeight - 10), new Point(0, canvasHeight - 10))));
 			lines.add(new ArrayList<>(List.of(new Point(0, canvasHeight), new Point(0, 0))));
 			
-			lines = interpolatePoints(lines);
+			lines = interpolateLines(lines);
 		
 			slider.getControl().setNumberOfTickMarks(lines.size() + 1).setRange(0, lines.size()).setValue(lines.size());
 		}
@@ -243,7 +246,7 @@ public class CanvasViewer extends PApplet {
 			lines.add(new ArrayList<>(List.of(new Point(canvasWidth, canvasHeight), new Point(0, canvasHeight))));
 			lines.add(new ArrayList<>(List.of(new Point(0, canvasHeight), new Point(0, 0))));
 			
-			lines = interpolatePoints(lines);
+			lines = interpolateLines(lines);
 		
 			slider.getControl().setNumberOfTickMarks(lines.size() + 1).setRange(0, lines.size()).setValue(lines.size());
 		}
@@ -261,6 +264,11 @@ public class CanvasViewer extends PApplet {
 				if (!line.isEmpty()) {
 					lines.add(line);
 				}
+			} else if (element instanceof SVGOMLineElement) {
+				List<Point> line = lineToPoints((SVGOMLineElement) element);
+				if (!line.isEmpty()) {
+					lines.add(line);
+				}
 			}
 		}
 
@@ -273,6 +281,10 @@ public class CanvasViewer extends PApplet {
 	}
 
 	private static List<List<Point>> sort(List<List<Point>> lines) {
+		if (lines.isEmpty()) {
+			return lines;
+		}
+		
 		List<List<Point>> sorted = new ArrayList<>();
 		List<List<Point>> startXSorted = new ArrayList<>();
 		startXSorted.addAll(lines);
@@ -523,58 +535,47 @@ public class CanvasViewer extends PApplet {
 	private List<Point> polylineToPoints(SVGOMPolylineElement polyline) {
 		List<Point> points = new ArrayList<>();
 		SVGPointList pointList = polyline.getPoints();
-		Point prevPoint = null;
 		for (int i = 0; i < pointList.getNumberOfItems(); i++) {
 			SVGPoint svgPoint = pointList.getItem(i);
-			Point point = new Point(svgPoint.getX() * scaleX, svgPoint.getY() * scaleY);
-			if (prevPoint == null) {
-				points.add(point);
-			} else {
-				double xDelta = point.x - prevPoint.x;
-				double yDelta = point.y - prevPoint.y;
-				double length = Math.sqrt(Math.pow(xDelta, 2) + Math.pow(yDelta, 2));
-				double steps = Math.ceil(length / maxLineSegmentLength);
-				if (steps < 2) {
-					steps = 2;
-				}
-				for (int step = 1; step < steps; step++) {
-					Point interpolatedPoint = new Point(prevPoint.x + xDelta * step / steps,
-							prevPoint.y + yDelta * step / steps);
-					points.add(interpolatedPoint);
-				}
-			}
-
-			prevPoint = point;
+			points.add(new Point(svgPoint.getX() * scaleX, svgPoint.getY() * scaleY));
 		}
-		if (prevPoint != null) {
-			points.add(prevPoint);
-		}
-		return points;
+		return interpolatePoints(points, maxLineSegmentLength);
 	}
 	
-	private List<List<Point>> interpolatePoints(List<List<Point>> lines) {
+	private List<Point> lineToPoints(SVGOMLineElement line) {
+		Point start = new Point(line.getX1().getBaseVal().getValue() * scaleX, line.getY1().getBaseVal().getValue() * scaleY);
+		Point end = new Point(line.getX2().getBaseVal().getValue() * scaleX, line.getY2().getBaseVal().getValue() * scaleY);
+		return interpolatePoints(List.of(start, end), maxLineSegmentLength);
+	}
+	
+	private List<Point> interpolatePoints(List<Point> points, double maxSegmentLength) {
+		if (points.size() < 2) {
+			throw new IllegalArgumentException("Can't interpolate over less than two points: " + points.toString());
+		}
+		List<Point> interpolated = new ArrayList<>();
+		interpolated.add(points.get(0));
+		for (int i = 1; i < points.size(); i++) {
+			Point point = points.get(i);
+			Point prevPoint = points.get(i - 1);
+			double xDelta = point.x - prevPoint.x;
+			double yDelta = point.y - prevPoint.y;
+			double length = Math.sqrt(Math.pow(xDelta, 2) + Math.pow(yDelta, 2));
+			double steps = Math.ceil(length / maxLineSegmentLength);
+			for (int step = 1; step < steps; step++) {
+				Point interpolatedPoint = new Point(prevPoint.x + xDelta * step / steps,
+						prevPoint.y + yDelta * step / steps);
+				interpolated.add(interpolatedPoint);
+			}
+		}
+		
+		return interpolated;
+	}
+	
+	private List<List<Point>> interpolateLines(List<List<Point>> lines) {
 		List<List<Point>> ret = new ArrayList<>();
 		
 		for (List<Point> points : lines) {
-			if (points.size() < 2) {
-				throw new IllegalArgumentException("Can't interpolate over less than two points: " + points.toString());
-			}
-			List<Point> interpolated = new ArrayList<>();
-			interpolated.add(points.get(0));
-			for (int i = 1; i < points.size(); i++) {
-				Point point = points.get(i);
-				Point prevPoint = points.get(i - 1);
-				double xDelta = point.x - prevPoint.x;
-				double yDelta = point.y - prevPoint.y;
-				double length = Math.sqrt(Math.pow(xDelta, 2) + Math.pow(yDelta, 2));
-				double steps = Math.ceil(length / maxLineSegmentLength);
-				for (int step = 1; step < steps; step++) {
-					Point interpolatedPoint = new Point(prevPoint.x + xDelta * step / steps,
-							prevPoint.y + yDelta * step / steps);
-					interpolated.add(interpolatedPoint);
-				}
-			}
-			ret.add(interpolated);
+			ret.add(interpolatePoints(points, maxLineSegmentLength));
 		}
 		
 		return ret;
