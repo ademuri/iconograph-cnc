@@ -1,10 +1,13 @@
 import java.io.BufferedWriter;
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.batik.anim.dom.SAXSVGDocumentFactory;
 import org.apache.batik.anim.dom.SVGGraphicsElement;
@@ -13,10 +16,13 @@ import org.apache.batik.anim.dom.SVGOMPathElement;
 import org.apache.batik.anim.dom.SVGOMPolylineElement;
 import org.apache.batik.anim.dom.SVGOMSVGElement;
 import org.apache.batik.bridge.BridgeContext;
+import org.apache.batik.bridge.CSSUtilities;
 import org.apache.batik.bridge.DocumentLoader;
 import org.apache.batik.bridge.GVTBuilder;
 import org.apache.batik.bridge.UserAgent;
 import org.apache.batik.bridge.UserAgentAdapter;
+import org.apache.batik.css.engine.SVGCSSEngine;
+import org.apache.batik.css.engine.value.Value;
 import org.apache.batik.util.XMLResourceDescriptor;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -74,7 +80,8 @@ public class CanvasViewer extends PApplet {
 	private PVector canvasStart = new PVector(CANVAS_MARGIN, CANVAS_MARGIN);
 	private float canvasScale = 1;
 
-	private List<List<Point>> lines = new ArrayList<>();
+	//private List<List<Point>> lines = new ArrayList<>();
+	private Map<Color, List<List<Point>>> lineMap = new HashMap<>();
 
 	private int prevSliderValue = 0;
 
@@ -160,9 +167,11 @@ public class CanvasViewer extends PApplet {
 		scaleY = scale;
 
 		scaleFromSvg();
+		/*
 		if (!lines.isEmpty()) {
 			slider.getControl().setNumberOfTickMarks(lines.size() + 1).setRange(0, lines.size()).setValue(lines.size());
 		}
+		*/
 	}
 
 	public void scaleFromSvg() {
@@ -172,43 +181,49 @@ public class CanvasViewer extends PApplet {
 
 		synchronized (this) {
 			SvgParser parser = new SvgParser(scaleX, scaleY, maxPathSegmentLength, maxLineSegmentLength);
-			lines = new ArrayList<>();
+			lineMap = new HashMap<>();
 			traverse(parser, svgRootElement);
-			lines = sort(lines);
+			for (Map.Entry<Color, List<List<Point>>> entry : lineMap.entrySet()) {
+				List<List<Point>> sortedLines = sort(entry.getValue());
+				lineMap.put(entry.getKey(), sortedLines);
+			}
 		}
 	}
 
 	public void createCalibration() {
+		List<List<Point>> lines = new ArrayList<>();
+		List<Point> boundPoints = List.of(new Point(0, 0), new Point(canvasWidth, 0),
+				new Point(canvasWidth, canvasHeight), new Point(0, canvasHeight), new Point(0, 0));
+		List<Point> boundPointsInterpolated = new ArrayList<>();
+		for (int i = 1; i < boundPoints.size(); i++) {
+			Point prevBound = boundPoints.get(i - 1);
+			Point curBound = boundPoints.get(i);
+			for (double j = 0; j <= 1; j += .01) {
+				boundPointsInterpolated.add(new Point(prevBound.x + (curBound.x - prevBound.x) * j,
+						prevBound.y + (curBound.y - prevBound.y) * j));
+			}
+		}
+		lines.add(boundPointsInterpolated);
+		double xStep = canvasWidth / 3;
+		double yStep = canvasHeight / 3;
+		double length = 5;
+		for (double x = xStep / 2; x < canvasWidth; x += xStep) {
+			for (double y = yStep / 2; y < canvasHeight; y += yStep) {
+				lines.add(new ArrayList<>(List.of(new Point(x - length / 2, y), new Point(x + length / 2, y))));
+				lines.add(new ArrayList<>(List.of(new Point(x, y - length / 2), new Point(x, y + length / 2))));
+			}
+		}
+			
 		synchronized (this) {
-			lines = new ArrayList<>();
-			List<Point> boundPoints = List.of(new Point(0, 0), new Point(canvasWidth, 0),
-					new Point(canvasWidth, canvasHeight), new Point(0, canvasHeight), new Point(0, 0));
-			List<Point> boundPointsInterpolated = new ArrayList<>();
-			for (int i = 1; i < boundPoints.size(); i++) {
-				Point prevBound = boundPoints.get(i - 1);
-				Point curBound = boundPoints.get(i);
-				for (double j = 0; j <= 1; j += .01) {
-					boundPointsInterpolated.add(new Point(prevBound.x + (curBound.x - prevBound.x) * j,
-							prevBound.y + (curBound.y - prevBound.y) * j));
-				}
-			}
-			lines.add(boundPointsInterpolated);
-			double xStep = canvasWidth / 3;
-			double yStep = canvasHeight / 3;
-			double length = 5;
-			for (double x = xStep / 2; x < canvasWidth; x += xStep) {
-				for (double y = yStep / 2; y < canvasHeight; y += yStep) {
-					lines.add(new ArrayList<>(List.of(new Point(x - length / 2, y), new Point(x + length / 2, y))));
-					lines.add(new ArrayList<>(List.of(new Point(x, y - length / 2), new Point(x, y + length / 2))));
-				}
-			}
-			slider.getControl().setNumberOfTickMarks(lines.size() + 1).setRange(0, lines.size()).setValue(lines.size());
+			lineMap = new HashMap<>();
+			lineMap.put(Color.black(), lines);
+			//slider.getControl().setNumberOfTickMarks(lines.size() + 1).setRange(0, lines.size()).setValue(lines.size());
 		}
 	}
 
 	public void createConsistencyTest() {
 		synchronized (this) {
-			lines = new ArrayList<>();
+			List<List<Point>> lines = new ArrayList<>();
 			double step = 20;
 			double length = canvasHeight - 40;
 			for (double offset = 0; offset < length; offset += step) {
@@ -222,7 +237,7 @@ public class CanvasViewer extends PApplet {
 
 	public void createKinematicsCalibration() {
 		synchronized (this) {
-			lines = new ArrayList<>();
+			List<List<Point>> lines = new ArrayList<>();
 			lines.add(new ArrayList<>(List.of(new Point(0, 10), new Point(canvasWidth, 10))));
 			lines.add(new ArrayList<>(List.of(new Point(canvasWidth, 0), new Point(canvasWidth, canvasHeight))));
 			lines.add(new ArrayList<>(
@@ -238,7 +253,7 @@ public class CanvasViewer extends PApplet {
 	// Draws the canvas outline
 	public void createCornerCalibration() {
 		synchronized (this) {
-			lines = new ArrayList<>();
+			List<List<Point>> lines = new ArrayList<>();
 			lines.add(new ArrayList<>(List.of(new Point(0, 0), new Point(canvasWidth, 0))));
 			lines.add(new ArrayList<>(List.of(new Point(canvasWidth, 0), new Point(canvasWidth, canvasHeight))));
 			lines.add(new ArrayList<>(List.of(new Point(canvasWidth, canvasHeight), new Point(0, canvasHeight))));
@@ -252,9 +267,17 @@ public class CanvasViewer extends PApplet {
 
 	private void traverse(SvgParser parser, Element element) {
 		if (element instanceof SVGGraphicsElement) {
-			List<Point> line = parser.parse((SVGGraphicsElement) element);
+			SVGGraphicsElement graphicsElement = (SVGGraphicsElement) element;
+			List<Point> line = parser.parse(graphicsElement);
 			if (!line.isEmpty()) {
-				lines.add(line);
+				Value value = CSSUtilities.getComputedStyle(element, SVGCSSEngine.STROKE_INDEX);
+				Color color;
+				if (!value.getCssText().equals("none")) {
+					color = Color.create(value.getRed().getFloatValue(), value.getGreen().getFloatValue(), value.getBlue().getFloatValue());
+					List<List<Point>> lines = lineMap.getOrDefault(color, new ArrayList<>());
+					lines.add(line);
+					lineMap.put(color, lines);
+				}
 			}
 		}
 
@@ -376,19 +399,31 @@ public class CanvasViewer extends PApplet {
 
 	public void draw() {
 		synchronized (this) {
-			if (lines.isEmpty()) {
+			/*
+			if (lineMap.isEmpty()) {
 				return;
 			}
+			*/
 
 			clear();
 			background(50, 50, 50);
 			fill(255);
+			noStroke();
 			rect(canvasStart.x, canvasStart.y, (float) (canvasWidth * canvasScale),
 					(float) (canvasHeight * canvasScale));
 			strokeWeight((float) (lineWidth * canvasScale));
+			/*
 			// Note: sometimes the values don't line up, maybe an SVG parsing problem
 			for (int i = 0; i < slider.getValue() && i < lines.size(); i++) {
 				drawLine(lines.get(i));
+			}
+			*/
+			for (Map.Entry<Color, List<List<Point>>> entry : lineMap.entrySet()) {
+				Color color = entry.getKey();
+				stroke(color.red(), color.green(), color.blue());
+				for (List<Point> line : entry.getValue()) {
+					drawLine(line);
+				}
 			}
 		}
 	}
@@ -502,8 +537,25 @@ public class CanvasViewer extends PApplet {
 	}
 
 	public void generateGcode(GcodeConfig config) {
+		// Delete old g-code files first
+		File outputDir = new File(".");
+		for (File file : outputDir.listFiles()) {
+			if (file.getAbsolutePath().matches(".*out_\\d*\\.gcode")) {
+				file.delete();
+			}
+		}
+		
+		int i = 0;
+		for (Map.Entry<Color, List<List<Point>>> entry: lineMap.entrySet()) {
+			generateGcodeForColor(config, entry.getValue(), entry.getKey(), i);
+			i++;
+		}
+	}
+	
+	private void generateGcodeForColor(GcodeConfig config, List<List<Point>> lines, Color color, int index) {
 		try {
-			BufferedWriter writer = Files.newBufferedWriter(Path.of("out.gcode"));
+			BufferedWriter writer = Files.newBufferedWriter(Path.of(String.format("out_%d.gcode", index)));
+			writer.append(String.format("; For color %s\n", color));
 			writer.append("G90 ; Absolute positioning\n");
 			writer.append(String.format("$120=%.2f ; X-Axis acceleration\n", config.acceleration()));
 			writer.append(String.format("$121=%.2f ; Y-Axis acceleration\n", config.acceleration()));
@@ -512,13 +564,15 @@ public class CanvasViewer extends PApplet {
 			boolean penDown = false;
 			writer.append(penUpGcode(config));
 
-			// Prime line
-			ArrayList<Point> primeLine = new ArrayList<>();
-			primeLine.add(new Point(0, 0));
-			primeLine.add(new Point(20, 0));
-			primeLine.add(new Point(0, 0));
-			primeLine.add(new Point(20, 0));
-			lines.add(0, primeLine);
+			synchronized(this) {
+				// Prime line
+				ArrayList<Point> primeLine = new ArrayList<>();
+				primeLine.add(new Point(0, 0));
+				primeLine.add(new Point(20, 0));
+				primeLine.add(new Point(0, 0));
+				primeLine.add(new Point(20, 0));
+				lines.add(0, primeLine);
+			}
 
 			for (int i = 0; i < lines.size(); i++) {
 				writer.append("\n");
