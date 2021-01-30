@@ -58,6 +58,9 @@ public class TextInput extends JPanel {
 		this.configSection = configSection;
 		this.configName = configName;
 
+		if (ini.get(configSection) == null) {
+			ini.add(configSection);
+		}
 		input.setText(ini.get(configSection).getOrDefault(configName, input.getText()));
 
 		this.input.addFocusListener(new FocusListener() {

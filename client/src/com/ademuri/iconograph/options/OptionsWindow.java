@@ -49,6 +49,7 @@ public class OptionsWindow extends JFrame implements KeyListener {
 	private static final String LAST_DIR_SVG = "LAST_DIR_SVG";
 
 	private final CanvasViewer canvasViewer;
+	private final MachinePanel machinePanel;
 	private JPanel contentPane;
 	private TextInput scaleX;
 	private TextInput scaleY;
@@ -302,6 +303,9 @@ public class OptionsWindow extends JFrame implements KeyListener {
 		JPanel panel_10 = new JPanel();
 		calPanel.add(panel_10);
 		panel_10.add(btnCornerCalibration);
+		
+		machinePanel = new MachinePanel(defaultFont, ini, canvasViewer);
+		tabbedPane.addTab("Machine", machinePanel);
 
 		addKeyListener(this);
 		setLocationRight();
@@ -322,6 +326,10 @@ public class OptionsWindow extends JFrame implements KeyListener {
 		if (!prefs.get(LAST_DIR_SVG, "").isEmpty()) {
 			fileChooser.setCurrentDirectory(new File(prefs.get(LAST_DIR_SVG, "")));
 		}
+		
+		canvasViewer.setSize(getProcessingWidth(), getProcessingHeight());
+		canvasViewer.setOptionsWindow(this);
+		canvasViewer.setMachineConfig(machinePanel.getMachineConfig());
 	}
 
 	private void setFontSize(Component[] components) {
@@ -417,6 +425,7 @@ public class OptionsWindow extends JFrame implements KeyListener {
 	}
 
 	private void doGenerateGcode() {
+		canvasViewer.setMachineConfig(machinePanel.getMachineConfig());
 		GcodeConfig config = GcodeConfig.builder().setDrawSpeed(Double.parseDouble(drawSpeed.getInput().getText()))
 				.setTravelSpeed(Double.parseDouble(travelSpeed.getInput().getText()))
 				.setAcceleration(Double.parseDouble(acceleration.getInput().getText()))

@@ -32,6 +32,7 @@ import org.w3c.dom.svg.SVGLength;
 import org.w3c.dom.svg.SVGPoint;
 import org.w3c.dom.svg.SVGPointList;
 
+import com.ademuri.iconograph.options.MachineConfig;
 import com.ademuri.iconograph.options.OptionsWindow;
 
 import controlP5.ControlEvent;
@@ -55,17 +56,6 @@ public class CanvasViewer extends PApplet {
 	private static final int CANVAS_MARGIN = 50;
 	private static final int FONT_SIZE = 40;
 
-	// Note: all physical distances are in millimeters
-	private static final double MM_PER_INCH = 25.4;
-	private static final double canvasWidth = 14 * MM_PER_INCH;
-	private static final double canvasHeight = 10 * MM_PER_INCH;
-	private static final double machineWidth = 1076;
-	private static final double machineHeight = 24.5 * MM_PER_INCH;
-	private static final double canvasLeftX = (machineWidth - canvasWidth) / 2;
-	private static final double canvasRightX = canvasLeftX + canvasWidth;
-	private static final double canvasTopY = machineHeight - canvasHeight - 7 * MM_PER_INCH;
-	private static final double canvasBottomY = canvasTopY + canvasHeight;
-
 	// Default acceleration used for non-drawing jogging, in mm/sec2
 	private static final double DEFAULT_ACCELERATION = 100.0;
 
@@ -78,7 +68,7 @@ public class CanvasViewer extends PApplet {
 	private static final Point homingLR = new Point(923, 918);
 
 	// Where the carriage should go after drawing
-	private static final Point finalPosition = new Point(canvasRightX, canvasTopY);
+	private Point finalPosition = new Point(0, 0);
 
 	private PVector canvasStart = new PVector(CANVAS_MARGIN, CANVAS_MARGIN);
 	private float canvasScale = 1;
@@ -88,6 +78,7 @@ public class CanvasViewer extends PApplet {
 
 	private int prevSliderValue = 0;
 
+	private MachineConfig machine;
 	private ControlP5 controlP5;
 	private SmartControl<Slider> slider;
 	private double scaleX = 1;
@@ -110,20 +101,13 @@ public class CanvasViewer extends PApplet {
 	public void settings() {
 		size(windowX, windowY);
 	}
-
+	
+	public void setMachineConfig(MachineConfig machine) {
+		this.machine = machine;
+		setupCanvas();
+	}
+	
 	public void setup() {
-		double usableX = windowX - (PANEL_WIDTH + CANVAS_MARGIN * 2);
-		double usableY = windowY - (SLIDER_HEIGHT + SLIDER_MARGIN + CANVAS_MARGIN * 2);
-
-		// Make canvas as big as possible using whole-number scaling, or fractional
-		// scaling if canvas is bigger than the window
-		if (canvasWidth > usableX || canvasHeight > usableY) {
-			canvasScale = (float) (1 / Math.max(Math.ceil(canvasWidth / usableX), Math.ceil(canvasHeight / usableY)));
-		} else {
-			canvasScale = (float) Math.min(Math.floor(usableX / canvasWidth), Math.floor(usableY / canvasHeight));
-		}
-		System.out.format("Using canvas scale factor of %.2f\n", canvasScale);
-
 		controlP5 = new ControlP5(this);
 		slider = new SmartControl<>(controlP5.addSlider("lineNumber")
 				.setPosition(50, windowY - SLIDER_HEIGHT - SLIDER_MARGIN).setHeight(SLIDER_HEIGHT)
@@ -132,6 +116,24 @@ public class CanvasViewer extends PApplet {
 
 		slider.getControl().getValueLabel().setSize(FONT_SIZE);
 		slider.getControl().getCaptionLabel().set("Line #").setSize(FONT_SIZE).setColor(255).setPaddingX(10);
+	}
+
+	private void setupCanvas() {
+		synchronized(this) {
+			finalPosition = new Point(machine.canvasOffsetX(), machine.canvasOffsetY());
+			double usableX = windowX - (PANEL_WIDTH + CANVAS_MARGIN * 2);
+			double usableY = windowY - (SLIDER_HEIGHT + SLIDER_MARGIN + CANVAS_MARGIN * 2);
+	
+			// Make canvas as big as possible using whole-number scaling, or fractional
+			// scaling if canvas is bigger than the window
+			if (machine.canvasWidth() > usableX || machine.canvasHeight() > usableY) {
+				canvasScale = (float) (1 / Math.max(Math.ceil(machine.canvasWidth() / usableX), Math.ceil(machine.canvasHeight() / usableY)));
+			} else {
+				canvasScale = (float) Math.min(Math.floor(usableX / machine.canvasWidth()), Math.floor(usableY / machine.canvasHeight()));
+			}
+			System.out.format("Using canvas scale factor of %.2f\n", canvasScale);
+		}
+		redraw();
 	}
 
 	public void loadSvg(String filename) {
@@ -161,10 +163,10 @@ public class CanvasViewer extends PApplet {
 		double scale = 1;
 		double svgWidth = width.getValueInSpecifiedUnits();
 		double svgHeight = height.getValueInSpecifiedUnits();
-		if (canvasWidth > svgWidth) {
-			scale = Math.min(canvasWidth / svgWidth, canvasHeight / svgHeight);
+		if (machine.canvasWidth() > svgWidth) {
+			scale = Math.min(machine.canvasWidth() / svgWidth, machine.canvasHeight() / svgHeight);
 		} else {
-			scale = 1 / Math.min(svgWidth / canvasWidth, svgHeight / canvasHeight);
+			scale = 1 / Math.min(svgWidth / machine.canvasWidth(), svgHeight / machine.canvasHeight());
 		}
 		scaleX = scale;
 		scaleY = scale;
@@ -196,8 +198,8 @@ public class CanvasViewer extends PApplet {
 
 	public void createCalibration() {
 		List<List<Point>> lines = new ArrayList<>();
-		List<Point> boundPoints = List.of(new Point(0, 0), new Point(canvasWidth, 0),
-				new Point(canvasWidth, canvasHeight), new Point(0, canvasHeight), new Point(0, 0));
+		List<Point> boundPoints = List.of(new Point(0, 0), new Point(machine.canvasWidth(), 0),
+				new Point(machine.canvasWidth(), machine.canvasHeight()), new Point(0, machine.canvasHeight()), new Point(0, 0));
 		List<Point> boundPointsInterpolated = new ArrayList<>();
 		for (int i = 1; i < boundPoints.size(); i++) {
 			Point prevBound = boundPoints.get(i - 1);
@@ -208,11 +210,11 @@ public class CanvasViewer extends PApplet {
 			}
 		}
 		lines.add(boundPointsInterpolated);
-		double xStep = canvasWidth / 3;
-		double yStep = canvasHeight / 3;
+		double xStep = machine.canvasWidth() / 3;
+		double yStep = machine.canvasHeight() / 3;
 		double length = 5;
-		for (double x = xStep / 2; x < canvasWidth; x += xStep) {
-			for (double y = yStep / 2; y < canvasHeight; y += yStep) {
+		for (double x = xStep / 2; x < machine.canvasWidth(); x += xStep) {
+			for (double y = yStep / 2; y < machine.canvasHeight(); y += yStep) {
 				lines.add(new ArrayList<>(List.of(new Point(x - length / 2, y), new Point(x + length / 2, y))));
 				lines.add(new ArrayList<>(List.of(new Point(x, y - length / 2), new Point(x, y + length / 2))));
 			}
@@ -229,11 +231,11 @@ public class CanvasViewer extends PApplet {
 		synchronized (this) {
 			List<List<Point>> lines = new ArrayList<>();
 			double step = 20;
-			double length = canvasHeight - 40;
+			double length = machine.canvasHeight() - 40;
 			for (double offset = 0; offset < length; offset += step) {
 				lines.add(new ArrayList<>(List.of(new Point(20, 20 + offset), new Point(20, 20 + offset + step))));
-				lines.add(new ArrayList<>(List.of(new Point(canvasWidth - 20, 20 + offset),
-						new Point(canvasWidth - 20, 20 + offset + step))));
+				lines.add(new ArrayList<>(List.of(new Point(machine.canvasWidth() - 20, 20 + offset),
+						new Point(machine.canvasWidth() - 20, 20 + offset + step))));
 			}
 			slider.getControl().setNumberOfTickMarks(lines.size() + 1).setRange(0, lines.size()).setValue(lines.size());
 		}
@@ -242,11 +244,11 @@ public class CanvasViewer extends PApplet {
 	public void createKinematicsCalibration() {
 		synchronized (this) {
 			List<List<Point>> lines = new ArrayList<>();
-			lines.add(new ArrayList<>(List.of(new Point(0, 10), new Point(canvasWidth, 10))));
-			lines.add(new ArrayList<>(List.of(new Point(canvasWidth, 0), new Point(canvasWidth, canvasHeight))));
+			lines.add(new ArrayList<>(List.of(new Point(0, 10), new Point(machine.canvasWidth(), 10))));
+			lines.add(new ArrayList<>(List.of(new Point(machine.canvasWidth(), 0), new Point(machine.canvasWidth(), machine.canvasHeight()))));
 			lines.add(new ArrayList<>(
-					List.of(new Point(canvasWidth, canvasHeight - 10), new Point(0, canvasHeight - 10))));
-			lines.add(new ArrayList<>(List.of(new Point(0, canvasHeight), new Point(0, 0))));
+					List.of(new Point(machine.canvasWidth(), machine.canvasHeight() - 10), new Point(0, machine.canvasHeight() - 10))));
+			lines.add(new ArrayList<>(List.of(new Point(0, machine.canvasHeight()), new Point(0, 0))));
 
 			lines = Point.interpolateLines(lines, maxLineSegmentLength);
 
@@ -258,10 +260,10 @@ public class CanvasViewer extends PApplet {
 	public void createCornerCalibration() {
 		synchronized (this) {
 			List<List<Point>> lines = new ArrayList<>();
-			lines.add(new ArrayList<>(List.of(new Point(0, 0), new Point(canvasWidth, 0))));
-			lines.add(new ArrayList<>(List.of(new Point(canvasWidth, 0), new Point(canvasWidth, canvasHeight))));
-			lines.add(new ArrayList<>(List.of(new Point(canvasWidth, canvasHeight), new Point(0, canvasHeight))));
-			lines.add(new ArrayList<>(List.of(new Point(0, canvasHeight), new Point(0, 0))));
+			lines.add(new ArrayList<>(List.of(new Point(0, 0), new Point(machine.canvasWidth(), 0))));
+			lines.add(new ArrayList<>(List.of(new Point(machine.canvasWidth(), 0), new Point(machine.canvasWidth(), machine.canvasHeight()))));
+			lines.add(new ArrayList<>(List.of(new Point(machine.canvasWidth(), machine.canvasHeight()), new Point(0, machine.canvasHeight()))));
+			lines.add(new ArrayList<>(List.of(new Point(0, machine.canvasHeight()), new Point(0, 0))));
 
 			lines = Point.interpolateLines(lines, maxLineSegmentLength);
 
@@ -395,20 +397,24 @@ public class CanvasViewer extends PApplet {
 		for (int i = 1; i < line.size(); i++) {
 			Point prevPoint = line.get(i - 1).translate(offsetX, offsetY);
 			Point point = line.get(i).translate(offsetX, offsetY);
-			if (prevPoint.x >= 0 && prevPoint.x <= canvasWidth && prevPoint.y >= 0 && prevPoint.y <= canvasHeight) {
+			if (prevPoint.x >= 0 && prevPoint.x <= machine.canvasWidth() && prevPoint.y >= 0 && prevPoint.y <= machine.canvasHeight()) {
 				canvasLine(prevPoint.x, prevPoint.y, point.x, point.y);
 			}
 		}
 	}
 
 	public void draw() {
+		if (machine == null) {
+			return;
+		}
+		
 		synchronized (this) {
 			clear();
 			background(50, 50, 50);
 			fill(255);
 			noStroke();
-			rect(canvasStart.x, canvasStart.y, (float) (canvasWidth * canvasScale),
-					(float) (canvasHeight * canvasScale));
+			rect(canvasStart.x, canvasStart.y, (float) (machine.canvasWidth() * canvasScale),
+					(float) (machine.canvasHeight() * canvasScale));
 			strokeWeight((float) (lineWidth * canvasScale));
 			
 			int lineNumber = 0;
@@ -435,16 +441,16 @@ public class CanvasViewer extends PApplet {
 	private int mouseStartY = 0;
 
 	public void mousePressed() {
-		if (mouseX > canvasStart.x && mouseX < canvasStart.x + canvasWidth * canvasScale && mouseY > canvasStart.y
-				&& mouseY < canvasStart.y + canvasHeight * canvasScale) {
+		if (mouseX > canvasStart.x && mouseX < canvasStart.x + machine.canvasWidth() * canvasScale && mouseY > canvasStart.y
+				&& mouseY < canvasStart.y + machine.canvasHeight() * canvasScale) {
 			mouseStartX = mouseX;
 			mouseStartY = mouseY;
 		}
 	}
 
 	public void mouseDragged() {
-		if (mouseX > canvasStart.x && mouseX < canvasStart.x + canvasWidth * canvasScale && mouseY > canvasStart.y
-				&& mouseY < canvasStart.y + canvasHeight * canvasScale) {
+		if (mouseX > canvasStart.x && mouseX < canvasStart.x + machine.canvasWidth() * canvasScale && mouseY > canvasStart.y
+				&& mouseY < canvasStart.y + machine.canvasHeight() * canvasScale) {
 			offsetX = offsetX + mouseX - mouseStartX;
 			offsetY = offsetY + mouseY - mouseStartY;
 			mouseStartX = mouseX;
@@ -528,7 +534,7 @@ public class CanvasViewer extends PApplet {
 	}
 
 	private Point machineToBeltPoint(Point machinePoint) {
-		Kinematics kinematics = new Kinematics(machineWidth);
+		Kinematics kinematics = new Kinematics(machine.machineWidth());
 		Point beltPoint = kinematics.computePoint(machinePoint.x, machinePoint.y);
 		return new Point(beltPoint.x - homingLR.x, beltPoint.y - homingLR.y);
 	}
@@ -561,32 +567,24 @@ public class CanvasViewer extends PApplet {
 			boolean penDown = false;
 			writer.append(penUpGcode(config));
 
-			synchronized(this) {
-				// Prime line
-				ArrayList<Point> primeLine = new ArrayList<>();
-				primeLine.add(new Point(0, 0));
-				primeLine.add(new Point(20, 0));
-				primeLine.add(new Point(0, 0));
-				primeLine.add(new Point(20, 0));
-				lines.add(0, primeLine);
-			}
+			// TODO: re-add prime line, maybe outside of draw area? 
 
 			for (int i = 0; i < lines.size(); i++) {
 				writer.append("\n");
 				List<Point> points = lines.get(i);
 				writer.append(String.format("; Line %d\n", i - 1));
 				for (int j = 0; j < points.size(); j++) {
-					Point machinePoint = points.get(j).translate(canvasLeftX, canvasTopY).translate(offsetX, offsetY);
-					if (machinePoint.x > canvasRightX || machinePoint.x < canvasLeftX) {
+					Point machinePoint = points.get(j).translate(machine.canvasOffsetX(), machine.canvasOffsetY()).translate(offsetX, offsetY);
+					if (machinePoint.x > machine.canvasRightX() || machinePoint.x < machine.canvasOffsetX()) {
 						System.err.format("Point X out of bounds: %s, X: %f -> %f, canvas point: %s\n", machinePoint,
-								canvasLeftX, canvasRightX, points.get(j));
+								machine.canvasOffsetX(), machine.canvasRightX(), points.get(j));
 						if (penDown) {
 							writer.append(penUpGcode(config));
 							penDown = false;
 						}
-					} else if (machinePoint.y > canvasBottomY || machinePoint.y < canvasTopY) {
+					} else if (machinePoint.y > machine.canvasBottomY() || machinePoint.y < machine.canvasOffsetY()) {
 						System.err.format("Point Y out of bounds: %s,  Y: %f -> %f, canvas point: %s\n", machinePoint,
-								canvasTopY, canvasBottomY, points.get(j));
+								machine.canvasOffsetY(), machine.canvasBottomY(), points.get(j));
 						if (penDown) {
 							writer.append(penUpGcode(config));
 							penDown = false;
