@@ -26,4 +26,6 @@ wget https://repo1.maven.org/maven2/com/google/auto/value/auto-value-annotations
 wget https://repo1.maven.org/maven2/com/google/auto/value/auto-value-annotations/1.7.4/auto-value-annotations-1.7.4.jar
 popd
 
+wget https://fazecast.github.io/jSerialComm/binaries/jSerialComm-2.6.2.jar
+
 popd
