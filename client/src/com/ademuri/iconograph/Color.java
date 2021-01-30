@@ -1,4 +1,6 @@
+package com.ademuri.iconograph;
 import com.google.auto.value.AutoValue;
+
 import processing.core.PApplet;
 
 @AutoValue

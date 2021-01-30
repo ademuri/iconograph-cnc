@@ -1,3 +1,4 @@
+package com.ademuri.iconograph.options;
 import java.awt.Component;
 import java.awt.Container;
 import java.awt.Dimension;
@@ -31,6 +32,10 @@ import org.apache.commons.io.filefilter.SuffixFileFilter;
 import org.ini4j.Ini;
 import org.ini4j.InvalidFileFormatException;
 import org.ini4j.Profile.Section;
+
+import com.ademuri.iconograph.CanvasViewer;
+import com.ademuri.iconograph.GcodeConfig;
+
 import javax.swing.border.LineBorder;
 import javax.swing.filechooser.FileFilter;
 import javax.swing.filechooser.FileNameExtensionFilter;

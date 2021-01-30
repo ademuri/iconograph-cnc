@@ -1,3 +1,4 @@
+package com.ademuri.iconograph;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.IOException;
@@ -30,6 +31,8 @@ import org.w3c.dom.Node;
 import org.w3c.dom.svg.SVGLength;
 import org.w3c.dom.svg.SVGPoint;
 import org.w3c.dom.svg.SVGPointList;
+
+import com.ademuri.iconograph.options.OptionsWindow;
 
 import controlP5.ControlEvent;
 import controlP5.ControlP5;

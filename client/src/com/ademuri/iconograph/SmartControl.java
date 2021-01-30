@@ -1,3 +1,4 @@
+package com.ademuri.iconograph;
 import controlP5.ControlEvent;
 import controlP5.ControlListener;
 import controlP5.Controller;

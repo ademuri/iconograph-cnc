@@ -1,3 +1,6 @@
+package com.ademuri.iconograph;
+import com.ademuri.iconograph.options.OptionsWindow;
+
 import processing.core.PApplet;
 
 public class Client {
