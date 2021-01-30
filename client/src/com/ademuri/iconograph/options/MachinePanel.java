@@ -6,6 +6,9 @@ import java.awt.Color;
 import java.awt.Font;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 import javax.swing.BoxLayout;
@@ -13,6 +16,9 @@ import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTextArea;
+import javax.swing.JTextField;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
 
@@ -20,6 +26,9 @@ import org.ini4j.Ini;
 
 import com.ademuri.iconograph.CanvasViewer;
 import com.fazecast.jSerialComm.SerialPort;
+import com.fazecast.jSerialComm.SerialPortDataListener;
+import com.fazecast.jSerialComm.SerialPortDataListenerWithExceptions;
+import com.fazecast.jSerialComm.SerialPortEvent;
 
 public class MachinePanel extends JPanel {
 	private static final String MACHINE_CONFIG = "machine";
@@ -110,12 +119,75 @@ public class MachinePanel extends JPanel {
 		});
 		control.add(refreshButton);
 		
+		JTextArea serialLog = new JTextArea(20, 20);
+		serialLog.setFont(defaultFont);
+		JScrollPane serialScroll = new JScrollPane(serialLog);
+		
 		JButton connectButton = new JButton("Connect");
 		connectButton.setFont(defaultFont);
 		connectButton.addActionListener(event -> {
 			serialPort = SerialPort.getCommPort((String) serialPortChooser.getSelectedItem());
+			serialPort.setBaudRate(Integer.parseInt(baudRate.getInput().getText()));
+			serialPort.openPort();
+			serialPort.addDataListener(new SerialPortDataListenerWithExceptions() {
+				@Override
+				public void serialEvent(SerialPortEvent arg0) {
+					System.out.println("Received serial event");
+					long bytesAvailable = serialPort.bytesAvailable();
+					byte bytes[] = new byte[(int) bytesAvailable];
+					serialPort.readBytes(bytes, bytesAvailable);
+					String s = new String(bytes, StandardCharsets.US_ASCII);
+					serialLog.append(s);
+				}
+				
+				@Override
+				public int getListeningEvents() {
+					//return SerialPort.LISTENING_EVENT_DATA_AVAILABLE;
+					return SerialPort.LISTENING_EVENT_DATA_RECEIVED;
+				}
+
+				@Override
+				public void catchException(Exception arg0) {
+					arg0.printStackTrace();
+				}
+			});
 		});
 		control.add(connectButton);
+		
+		JTextField serialSend = new JTextField();
+		serialSend.setFont(defaultFont);
+		serialSend.addKeyListener(new KeyListener() {
+			
+			@Override
+			public void keyTyped(KeyEvent arg0) {
+				// TODO Auto-generated method stub
+				
+			}
+			
+			@Override
+			public void keyReleased(KeyEvent arg0) {
+				// TODO Auto-generated method stub
+				
+			}
+			
+			@Override
+			public void keyPressed(KeyEvent arg0) {
+				if (arg0.getKeyCode() == KeyEvent.VK_ENTER) {
+					if (serialPort != null && serialPort.isOpen()) {
+						String toSend = serialSend.getText() + "\r\n";
+						byte[] buffer = toSend.getBytes(StandardCharsets.US_ASCII);
+						int ret = serialPort.writeBytes(buffer, buffer.length);
+						serialLog.append(toSend);
+						serialSend.setText("");
+						
+						System.out.format("Wrote %d bytes\n", ret);
+					}
+				}
+			}
+		});
+		control.add(serialSend);
+		
+		control.add(serialScroll);
 	}
 	
 	public MachineConfig getMachineConfig() {
