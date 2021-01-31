@@ -11,6 +11,9 @@ public abstract class MachineConfig {
 	public abstract double canvasHeight();
 	public abstract double canvasOffsetX();
 	public abstract double canvasOffsetY();
+	
+	public abstract double probeX();
+	public abstract double probeY();
 
 	public static Builder builder() {
 		return new AutoValue_MachineConfig.Builder();
@@ -24,6 +27,8 @@ public abstract class MachineConfig {
 		public abstract Builder setCanvasHeight(double value);
 		public abstract Builder setCanvasOffsetX(double value);
 		public abstract Builder setCanvasOffsetY(double value);
+		public abstract Builder setProbeX(double value);
+		public abstract Builder setProbeY(double value);
 		public abstract MachineConfig build();
 	}
 

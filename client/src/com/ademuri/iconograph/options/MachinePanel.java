@@ -41,6 +41,9 @@ public class MachinePanel extends JPanel {
 	private DistanceInput canvasOffsetX;
 	private DistanceInput canvasOffsetY;
 	
+	private DistanceInput probeX;
+	private DistanceInput probeY;
+	
 	private SerialPort serialPort = null;
 	
 	public MachinePanel(Font defaultFont, Ini ini, CanvasViewer canvasViewer) {
@@ -84,6 +87,14 @@ public class MachinePanel extends JPanel {
 		canvasOffsetY = new DistanceInput("Canvas Offset Y", defaultFont, "200");
 		canvasOffsetY.setConfig(ini, MACHINE_CONFIG, "canvas_offset_y");
 		distances.add(canvasOffsetY);
+		
+		probeX = new DistanceInput("Probe X", defaultFont, "-347");
+		probeX.setConfig(ini, MACHINE_CONFIG, "probe_x");
+		distances.add(probeX);
+		
+		probeY = new DistanceInput("Probe Y", defaultFont, "-356");
+		probeY.setConfig(ini, MACHINE_CONFIG, "probe_y");
+		distances.add(probeY);
 		
 		
 		JPanel control = new JPanel();
@@ -198,6 +209,8 @@ public class MachinePanel extends JPanel {
 				.setCanvasHeight(canvasHeight.getValue().get())
 				.setCanvasOffsetX(canvasOffsetX.getValue().get())
 				.setCanvasOffsetY(canvasOffsetY.getValue().get())
+				.setProbeX(probeX.getValue().get())
+				.setProbeY(probeY.getValue().get())
 				.build();
 	}
 }

@@ -6,7 +6,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class DistanceInput extends TextInput {
-	private static final Pattern distancePattern = Pattern.compile("([\\d.,]*)\\s*(\\w*)");
+	private static final Pattern distancePattern = Pattern.compile("([\\d.,\\-]*)\\s*(\\w*)");
 
 	public DistanceInput(String name, Font font, String defaultValue) {
 		super(name, font, defaultValue);

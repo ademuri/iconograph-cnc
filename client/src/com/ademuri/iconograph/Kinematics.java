@@ -71,7 +71,7 @@ public class Kinematics {
 			for (double[] row : jacobian_data) {
 				for (double entry : row) {
 					if (Double.isNaN(entry)) {
-						throw new RuntimeException(
+						throw new KinematicsException(
 								String.format("No jacobian exists for point (%f, %f), params (%3.2f, %4.2f, %4.2f)", x,
 										y, phi, y1, y2));
 					}
@@ -82,7 +82,7 @@ public class Kinematics {
 			for (double[] row : jacobianInverse.getData()) {
 				for (double entry : row) {
 					if (Double.isNaN(entry)) {
-						throw new RuntimeException(
+						throw new KinematicsException(
 								String.format("No inverse exists for point (%f, %f), Jacobian: %s", x, y, jacobian));
 					}
 				}
@@ -131,6 +131,13 @@ public class Kinematics {
 		// (phi2: %3.2f)\n", phi, y1, y2, phi1, phi2);
 
 		return new Point(left, right);
+	}
+	
+	public static class KinematicsException extends IllegalArgumentException {
+		
+		public KinematicsException(String message) {
+			super(message);
+		}
 	}
 
 }

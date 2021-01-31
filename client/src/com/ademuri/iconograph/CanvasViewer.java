@@ -120,7 +120,7 @@ public class CanvasViewer extends PApplet {
 
 	private void setupCanvas() {
 		synchronized(this) {
-			finalPosition = new Point(machine.canvasOffsetX(), machine.canvasOffsetY());
+			finalPosition = new Point(machine.canvasRightX(), machine.canvasOffsetY());
 			double usableX = windowX - (PANEL_WIDTH + CANVAS_MARGIN * 2);
 			double usableY = windowY - (SLIDER_HEIGHT + SLIDER_MARGIN + CANVAS_MARGIN * 2);
 	
@@ -563,6 +563,11 @@ public class CanvasViewer extends PApplet {
 			writer.append(String.format("$120=%.2f ; X-Axis acceleration\n", config.acceleration()));
 			writer.append(String.format("$121=%.2f ; Y-Axis acceleration\n", config.acceleration()));
 			writer.append("\n");
+			
+			writer.append(String.format("G01 X%.2f Y%.2f F%.2f\n ; Go to probe location\n", machine.probeX(), machine.probeY(), config.travelSpeed()));
+			writer.append("G04 P0.5 ; Delay for 0.5s\n");
+			writer.append("G38.2 F200 Z-20; Probe toward canvas, stop on 'contact', error on failure\n\n");
+			writer.append("G92 Z1.3");
 
 			boolean penDown = false;
 			writer.append(penUpGcode(config));
