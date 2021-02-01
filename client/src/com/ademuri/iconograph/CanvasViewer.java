@@ -564,13 +564,15 @@ public class CanvasViewer extends PApplet {
 			writer.append(String.format("$121=%.2f ; Y-Axis acceleration\n", config.acceleration()));
 			writer.append("\n");
 			
+			writer.append("G92 Z0 ; Reset Z to 0\n");
+			writer.append("G01 Z5 F400 ; Raise Z\n\n");
 			writer.append(String.format("G01 X%.2f Y%.2f F%.2f\n ; Go to probe location\n", machine.probeX(), machine.probeY(), config.travelSpeed()));
 			writer.append("G04 P0.5 ; Delay for 0.5s\n");
-			writer.append("G38.2 F200 Z-20; Probe toward canvas, stop on 'contact', error on failure\n\n");
-			writer.append("G92 Z1.3");
+			writer.append("G38.2 F200 Z-20; Probe toward canvas, stop on 'contact', error on failure\n");
+			writer.append("G92 Z1.3 ; Reset Z to sensor height\n");
+			writer.append("G01 Z8 F400 ; Raise Z\n\n");
 
 			boolean penDown = false;
-			writer.append(penUpGcode(config));
 
 			// TODO: re-add prime line, maybe outside of draw area? 
 
