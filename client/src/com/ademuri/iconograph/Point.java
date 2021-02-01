@@ -36,7 +36,7 @@ public class Point {
 			double yDelta = point.y - prevPoint.y;
 			double length = Math.sqrt(Math.pow(xDelta, 2) + Math.pow(yDelta, 2));
 			double steps = Math.ceil(length / maxSegmentLength);
-			for (int step = 1; step < steps; step++) {
+			for (int step = 1; step <= steps; step++) {
 				Point interpolatedPoint = new Point(prevPoint.x + xDelta * step / steps,
 						prevPoint.y + yDelta * step / steps);
 				interpolated.add(interpolatedPoint);
