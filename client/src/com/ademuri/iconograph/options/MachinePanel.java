@@ -138,6 +138,13 @@ public class MachinePanel extends JPanel {
 		JButton connectButton = new JButton("Connect");
 		connectButton.setFont(defaultFont);
 		connectButton.addActionListener(event -> {
+			if (serialPort != null && serialPort.isOpen()) {
+				connectButton.setText("Connect");
+				serialPort.removeDataListener();
+				serialPort.closePort();
+				return;
+			}
+			
 			serialPort = SerialPort.getCommPort((String) serialPortChooser.getSelectedItem());
 			serialPort.setBaudRate(Integer.parseInt(baudRate.getInput().getText()));
 			serialPort.setParity(SerialPort.NO_PARITY);
@@ -180,6 +187,7 @@ public class MachinePanel extends JPanel {
 					arg0.printStackTrace();
 				}
 			});
+			connectButton.setText("Disconnect");
 		});
 		control.add(connectButton);
 
