@@ -330,6 +330,8 @@ public class OptionsWindow extends JFrame implements KeyListener {
 		canvasViewer.setSize(getProcessingWidth(), getProcessingHeight());
 		canvasViewer.setOptionsWindow(this);
 		canvasViewer.setMachineConfig(machinePanel.getMachineConfig());
+		
+		tabbedPane.setSelectedComponent(machinePanel);
 	}
 
 	private void setFontSize(Component[] components) {
