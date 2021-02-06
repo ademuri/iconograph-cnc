@@ -532,6 +532,26 @@ public class CanvasViewer extends PApplet {
 	private static String penUpGcode(GcodeConfig config) {
 		return String.format("G01 F%.1f Z%.3f ; Pen up\n", config.penSpeed(), config.penUp());
 	}
+	
+	public String topLeftGcode() {
+		Point point = machineToBeltPoint(new Point(machine.canvasOffsetX(), machine.canvasOffsetY()));
+		return String.format("G01 X%.2f Y%.2f F4000\n", point.x, point.y);
+	}
+	
+	public String topRightGcode() {
+		Point point = machineToBeltPoint(new Point(machine.canvasRightX(), machine.canvasOffsetY()));
+		return String.format("G01 X%.2f Y%.2f F4000\n", point.x, point.y);
+	}
+	
+	public String bottomLeftGcode() {
+		Point point = machineToBeltPoint(new Point(machine.canvasOffsetX(), machine.canvasBottomY()));
+		return String.format("G01 X%.2f Y%.2f F4000\n", point.x, point.y);
+	}
+	
+	public String bottomRightGcode() {
+		Point point = machineToBeltPoint(new Point(machine.canvasRightX(), machine.canvasBottomY()));
+		return String.format("G01 X%.2f Y%.2f F4000\n", point.x, point.y);
+	}
 
 	private Point machineToBeltPoint(Point machinePoint) {
 		Kinematics kinematics = new Kinematics(machine.machineWidth());

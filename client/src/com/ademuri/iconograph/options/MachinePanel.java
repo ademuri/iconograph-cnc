@@ -2,6 +2,8 @@ package com.ademuri.iconograph.options;
 
 import java.awt.Color;
 import java.awt.Font;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
 import java.awt.event.KeyAdapter;
@@ -18,6 +20,7 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
+import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
 import javax.swing.text.BadLocationException;
 
@@ -43,6 +46,7 @@ public class MachinePanel extends JPanel {
 	private DistanceInput probeX;
 	private DistanceInput probeY;
 
+	private final JTextArea serialLog;
 	private SerialPort serialPort = null;
 
 	public MachinePanel(Font defaultFont, Ini ini, CanvasViewer canvasViewer) {
@@ -99,6 +103,51 @@ public class MachinePanel extends JPanel {
 		control.setBorder(new LineBorder(new Color(0, 0, 0)));
 		control.setLayout(new BoxLayout(control, BoxLayout.Y_AXIS));
 		add(control);
+		
+		JPanel jogPanel = new JPanel();
+		jogPanel.setLayout(new BoxLayout(jogPanel, BoxLayout.Y_AXIS));
+		jogPanel.setBorder(new EmptyBorder(10, 0, 10, 0));
+		control.add(jogPanel);
+		
+		JLabel jogLabel = new JLabel("Jog Control");
+		jogLabel.setFont(defaultFont);
+		jogPanel.add(jogLabel);
+		
+		JPanel jogTop = new JPanel();
+		jogTop.setLayout(new BoxLayout(jogTop, BoxLayout.X_AXIS));
+		jogPanel.add(jogTop);
+		
+		JButton jogTopLeft = new JButton("Top Left");
+		jogTopLeft.setFont(defaultFont);
+		jogTop.add(jogTopLeft);
+		jogTopLeft.addActionListener(event -> {
+			sendGcode(canvasViewer.topLeftGcode());
+		});
+		
+		JButton jogTopRight = new JButton("Top Right");
+		jogTopRight.setFont(defaultFont);
+		jogTop.add(jogTopRight);
+		jogTopRight.addActionListener(event -> {
+			sendGcode(canvasViewer.topRightGcode());
+		});
+		
+		JPanel jogBottom = new JPanel();
+		jogBottom.setLayout(new BoxLayout(jogBottom, BoxLayout.X_AXIS));
+		jogPanel.add(jogBottom);
+		
+		JButton jogBottomLeft = new JButton("Bottom Left");
+		jogBottomLeft.setFont(defaultFont);
+		jogBottom.add(jogBottomLeft);
+		jogBottomLeft.addActionListener(event -> {
+			sendGcode(canvasViewer.bottomLeftGcode());
+		});
+		
+		JButton jogBottomRight = new JButton("Bottom Right");
+		jogBottomRight.setFont(defaultFont);
+		jogBottom.add(jogBottomRight);
+		jogBottomRight.addActionListener(event -> {
+			sendGcode(canvasViewer.bottomRightGcode());
+		});
 
 		JLabel serialPortLabel = new JLabel("Serial Port");
 		serialPortLabel.setFont(defaultFont);
@@ -130,7 +179,7 @@ public class MachinePanel extends JPanel {
 		});
 		control.add(refreshButton);
 
-		JTextArea serialLog = new JTextArea(10, 24);
+		serialLog = new JTextArea(10, 24);
 		serialLog.setFont(defaultFont);
 		serialLog.setEditable(false);
 		JScrollPane serialScroll = new JScrollPane(serialLog);
@@ -198,21 +247,29 @@ public class MachinePanel extends JPanel {
 			public void keyPressed(KeyEvent arg0) {
 				if (arg0.getKeyCode() == KeyEvent.VK_ENTER) {
 					if (serialPort != null && serialPort.isOpen()) {
-						String toSend = serialSend.getText() + "\r\n";
-						byte[] buffer = toSend.getBytes(StandardCharsets.US_ASCII);
-						int ret = serialPort.writeBytes(buffer, buffer.length);
-						serialLog.append("> " + toSend);
+						sendGcode(serialSend.getText());
 						serialSend.setText("");
-
-						if (ret != buffer.length) {
-							System.err.format("Tried to write %d bytes to serial, but instead wrote %d\n", buffer.length, ret);
-						}
 					}
 				}
 			}
 		});
 		control.add(serialSend);
 		control.add(serialScroll);
+	}
+	
+	private void sendGcode(String gcode) {
+		if (serialPort == null || !serialPort.isOpen()) {
+			return;
+		}
+		
+		String toSend = gcode + "\r\n";
+		byte[] buffer = toSend.getBytes(StandardCharsets.US_ASCII);
+		int ret = serialPort.writeBytes(buffer, buffer.length);
+		serialLog.append("> " + toSend);
+
+		if (ret != buffer.length) {
+			System.err.format("Tried to write %d bytes to serial, but instead wrote %d\n", buffer.length, ret);
+		}
 	}
 
 	public MachineConfig getMachineConfig() {
