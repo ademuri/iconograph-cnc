@@ -88,6 +88,7 @@ public class CanvasViewer extends PApplet {
 	private double lineWidth = 1;
 	private Element svgRootElement;
 	private OptionsWindow optionsWindow = null;
+	private int canvasColor = color(255, 255, 255);
 
 	public void setSize(int width, int height) {
 		windowX = width;
@@ -411,7 +412,7 @@ public class CanvasViewer extends PApplet {
 		synchronized (this) {
 			clear();
 			background(50, 50, 50);
-			fill(255);
+			fill(canvasColor);
 			noStroke();
 			rect(canvasStart.x, canvasStart.y, (float) (machine.canvasWidth() * canvasScale),
 					(float) (machine.canvasHeight() * canvasScale));
@@ -511,6 +512,11 @@ public class CanvasViewer extends PApplet {
 		scaleFromSvg();
 		redraw();
 	}
+	
+	public void setCanvasColor(String hexColor) {
+		canvasColor = Integer.parseInt(hexColor, 16);
+		System.out.format("canvasColor: %d\n", canvasColor);
+	}
 
 	public void setOptionsWindow(OptionsWindow optionsWindow) {
 		this.optionsWindow = optionsWindow;
@@ -584,6 +590,7 @@ public class CanvasViewer extends PApplet {
 			writer.append(String.format("$121=%.2f ; Y-Axis acceleration\n", config.acceleration()));
 			writer.append("\n");
 			
+			/*
 			writer.append("G92 Z0 ; Reset Z to 0\n");
 			writer.append("G01 Z5 F400 ; Raise Z\n\n");
 			writer.append(String.format("G01 X%.2f Y%.2f F%.2f\n ; Go to probe location\n", machine.probeX(), machine.probeY(), config.travelSpeed()));
@@ -591,6 +598,8 @@ public class CanvasViewer extends PApplet {
 			writer.append("G38.2 F200 Z-20; Probe toward canvas, stop on 'contact', error on failure\n");
 			writer.append("G92 Z1.3 ; Reset Z to sensor height\n");
 			writer.append("G01 Z8 F400 ; Raise Z\n\n");
+			*/
+			writer.append("G01 Z5 F400 ; Raise Z\n\n");
 
 			boolean penDown = false;
 

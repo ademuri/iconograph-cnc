@@ -144,6 +144,16 @@ public class OptionsWindow extends JFrame implements KeyListener {
 			}
 		});
 		panel_6.add(btnLoadSvg);
+		
+		TextInput canvasColor = new TextInput("Canvas Color", defaultFont, "FFFFFF");
+		canvasColor.getInput().addFocusListener(new FocusAdapter() {
+			@Override
+			public void focusLost(FocusEvent e) {
+				canvasViewer.setCanvasColor(canvasColor.getInput().getText());
+			}
+		});
+		canvasColor.setConfig(ini, SECTION_DRAWING, "canvas_color");
+		drawingPanel.add(canvasColor);
 
 		transformPanel = new JPanel();
 		transformPanel.setBorder(new LineBorder(new Color(0, 0, 0)));
@@ -330,8 +340,6 @@ public class OptionsWindow extends JFrame implements KeyListener {
 		canvasViewer.setSize(getProcessingWidth(), getProcessingHeight());
 		canvasViewer.setOptionsWindow(this);
 		canvasViewer.setMachineConfig(machinePanel.getMachineConfig());
-		
-		tabbedPane.setSelectedComponent(machinePanel);
 	}
 
 	private void setFontSize(Component[] components) {
