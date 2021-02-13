@@ -6,7 +6,9 @@ import org.apache.batik.anim.dom.SVGGraphicsElement;
 import org.apache.batik.anim.dom.SVGOMCircleElement;
 import org.apache.batik.anim.dom.SVGOMLineElement;
 import org.apache.batik.anim.dom.SVGOMPathElement;
+import org.apache.batik.anim.dom.SVGOMPolygonElement;
 import org.apache.batik.anim.dom.SVGOMPolylineElement;
+import org.apache.batik.anim.dom.SVGPointShapeElement;
 import org.apache.batik.bridge.CSSUtilities;
 import org.apache.batik.css.engine.SVGCSSEngine;
 import org.apache.batik.css.engine.value.Value;
@@ -29,8 +31,8 @@ public class SvgParser {
 	List<Point> parse(SVGGraphicsElement element) {
 		if (element instanceof SVGOMPathElement) {
 			return pathToPoints((SVGOMPathElement) element);
-		} else if (element instanceof SVGOMPolylineElement) {
-			return polylineToPoints((SVGOMPolylineElement) element);
+		} else if (element instanceof SVGPointShapeElement) {
+			return pointShapeToPoints((SVGPointShapeElement) element);
 		} else if (element instanceof SVGOMLineElement) {
 			return lineToPoints((SVGOMLineElement) element);
 		} else if (element instanceof SVGOMCircleElement) {
@@ -64,12 +66,17 @@ public class SvgParser {
 		return points;
 	}
 
-	private List<Point> polylineToPoints(SVGOMPolylineElement polyline) {
+	private List<Point> pointShapeToPoints(SVGPointShapeElement shape) {
 		List<Point> points = new ArrayList<>();
-		SVGPointList pointList = polyline.getPoints();
+		SVGPointList pointList = shape.getPoints();
 		for (int i = 0; i < pointList.getNumberOfItems(); i++) {
 			SVGPoint svgPoint = pointList.getItem(i);
 			points.add(new Point(svgPoint.getX() * scaleX, svgPoint.getY() * scaleY));
+		}
+		if (shape instanceof SVGOMPolygonElement) {
+			// For polygons, close the shape
+			SVGPoint firstPoint = pointList.getItem(0);
+			points.add(new Point(firstPoint.getX() * scaleX, firstPoint.getY() * scaleY));
 		}
 		return Point.interpolatePoints(points, maxLineSegmentLength);
 	}
@@ -81,7 +88,7 @@ public class SvgParser {
 				line.getY2().getBaseVal().getValue() * scaleY);
 		return Point.interpolatePoints(List.of(start, end), maxLineSegmentLength);
 	}
-
+	
 	private List<Point> circleToPoints(SVGOMCircleElement circle) {
 		List<Point> points = new ArrayList<>();
 		double x = circle.getCx().getBaseVal().getValue();
