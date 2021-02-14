@@ -11,6 +11,7 @@ import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.function.Function;
 
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
@@ -47,13 +48,16 @@ public class MachinePanel extends JPanel {
 	private DistanceInput probeY;
 
 	private final JTextArea serialLog;
-	private SerialPort serialPort = null;
+	private final SerialGrbl serialGrbl = new SerialGrbl();
 
 	public MachinePanel(Font defaultFont, Ini ini, CanvasViewer canvasViewer) {
+		JPanel contentPanel = new JPanel();
+		contentPanel.setLayout(new BoxLayout(contentPanel, BoxLayout.Y_AXIS));
+		
 		JPanel distances = new JPanel();
 		distances.setBorder(new LineBorder(new Color(0, 0, 0)));
 		distances.setLayout(new BoxLayout(distances, BoxLayout.Y_AXIS));
-		add(distances);
+		contentPanel.add(distances);
 
 		machineWidth = new DistanceInput("Machine Width", defaultFont, "1000");
 		machineWidth.setConfig(ini, MACHINE_CONFIG, "machine_width");
@@ -102,7 +106,7 @@ public class MachinePanel extends JPanel {
 		JPanel control = new JPanel();
 		control.setBorder(new LineBorder(new Color(0, 0, 0)));
 		control.setLayout(new BoxLayout(control, BoxLayout.Y_AXIS));
-		add(control);
+		contentPanel.add(control);
 		
 		JPanel jogPanel = new JPanel();
 		jogPanel.setLayout(new BoxLayout(jogPanel, BoxLayout.Y_AXIS));
@@ -169,6 +173,9 @@ public class MachinePanel extends JPanel {
 		TextInput baudRate = new TextInput("Baud Rate", defaultFont, "400000");
 		baudRate.setConfig(ini, MACHINE_CONFIG, "baud_rate");
 		control.add(baudRate);
+		
+		JPanel serialButtonPanel = new JPanel();
+		control.add(serialButtonPanel);
 
 		JButton refreshButton = new JButton("Refresh");
 		refreshButton.setFont(defaultFont);
@@ -177,7 +184,7 @@ public class MachinePanel extends JPanel {
 			List.of(SerialPort.getCommPorts()).stream().map(serialPort -> serialPort.getSystemPortName())
 					.forEach(portName -> serialPortChooser.addItem(portName));
 		});
-		control.add(refreshButton);
+		serialButtonPanel.add(refreshButton);
 
 		serialLog = new JTextArea(10, 24);
 		serialLog.setFont(defaultFont);
@@ -187,58 +194,32 @@ public class MachinePanel extends JPanel {
 		JButton connectButton = new JButton("Connect");
 		connectButton.setFont(defaultFont);
 		connectButton.addActionListener(event -> {
-			if (serialPort != null && serialPort.isOpen()) {
+			if (serialGrbl.isOpen()) {
+				serialGrbl.close();
 				connectButton.setText("Connect");
-				serialPort.removeDataListener();
-				serialPort.closePort();
+				return;
+			}
+			if (!serialGrbl.open((String) serialPortChooser.getSelectedItem(), Integer.parseInt(baudRate.getInput().getText()))) {
+				serialLog.append("Failed to open serial port\n");
 				return;
 			}
 			
-			serialPort = SerialPort.getCommPort((String) serialPortChooser.getSelectedItem());
-			serialPort.setBaudRate(Integer.parseInt(baudRate.getInput().getText()));
-			serialPort.setParity(SerialPort.NO_PARITY);
-			serialPort.setNumStopBits(SerialPort.ONE_STOP_BIT);
-			serialPort.setNumDataBits(8);
-			if (!serialPort.openPort()) {
-				serialLog.append("Failed to open serial port\n");
-			}
-			serialPort.addDataListener(new SerialPortDataListenerWithExceptions() {
-				@Override
-				public void serialEvent(SerialPortEvent arg0) {
-					long bytesAvailable = serialPort.bytesAvailable();
-					if (bytesAvailable <= 0) {
-						return;
+			serialGrbl.setReceivedCallback((String line) -> {
+				serialLog.append(line);
+
+				if (serialLog.getLineCount() > MONITOR_MAX_LINES) {
+					try {
+						serialLog.replaceRange("", 0,
+								serialLog.getLineStartOffset(serialLog.getLineCount() - MONITOR_MAX_LINES));
+					} catch (BadLocationException e) {
+						// TODO: better error handling
+						e.printStackTrace();
 					}
-
-					byte bytes[] = new byte[(int) bytesAvailable];
-					serialPort.readBytes(bytes, bytesAvailable);
-					String s = new String(bytes, StandardCharsets.US_ASCII);
-					serialLog.append(s);
-
-					if (serialLog.getLineCount() > MONITOR_MAX_LINES) {
-						try {
-							serialLog.replaceRange("", 0,
-									serialLog.getLineStartOffset(serialLog.getLineCount() - MONITOR_MAX_LINES));
-						} catch (BadLocationException e) {
-							// TODO: better error handling
-							e.printStackTrace();
-						}
-					}
-				}
-
-				@Override
-				public int getListeningEvents() {
-					return SerialPort.LISTENING_EVENT_DATA_AVAILABLE;
-				}
-
-				@Override
-				public void catchException(Exception arg0) {
-					arg0.printStackTrace();
 				}
 			});
 			connectButton.setText("Disconnect");
 		});
-		control.add(connectButton);
+		serialButtonPanel.add(connectButton);
 
 		JTextField serialSend = new JTextField();
 		serialSend.setFont(defaultFont);
@@ -246,8 +227,8 @@ public class MachinePanel extends JPanel {
 			@Override
 			public void keyPressed(KeyEvent arg0) {
 				if (arg0.getKeyCode() == KeyEvent.VK_ENTER) {
-					if (serialPort != null && serialPort.isOpen()) {
-						sendGcode(serialSend.getText());
+					if (serialGrbl.isOpen()) {
+						serialGrbl.sendGcode(serialSend.getText());
 						serialSend.setText("");
 					}
 				}
@@ -255,21 +236,42 @@ public class MachinePanel extends JPanel {
 		});
 		control.add(serialSend);
 		control.add(serialScroll);
+		
+		JPanel gcodePanel = new JPanel();
+		gcodePanel.setLayout(new BoxLayout(gcodePanel, BoxLayout.Y_AXIS));
+		control.add(gcodePanel);
+		JPanel gcodeButtonPanel = new JPanel();
+		gcodePanel.add(gcodeButtonPanel);
+		
+		JButton loadGcode = new JButton("Load Gcode");
+		loadGcode.setFont(defaultFont);
+		gcodeButtonPanel.add(loadGcode);
+		
+		JButton sendGcode = new JButton("Send Gcode");
+		sendGcode.setFont(defaultFont);
+		gcodeButtonPanel.add(sendGcode);
+		
+		JButton pauseGcode = new JButton("Pause");
+		pauseGcode.setFont(defaultFont);
+		gcodeButtonPanel.add(pauseGcode);
+		
+		JPanel gcodeStatusPanel = new JPanel();
+		gcodePanel.add(gcodeStatusPanel);
+		
+		JLabel gcodeFile = new JLabel("No g-code loaded");
+		gcodeStatusPanel.add(gcodeFile);
+		
+		JScrollPane scrollPane = new JScrollPane(contentPanel);
+		add(scrollPane);
 	}
 	
 	private void sendGcode(String gcode) {
-		if (serialPort == null || !serialPort.isOpen()) {
+		if (!serialGrbl.isOpen()) {
 			return;
 		}
-		
-		String toSend = gcode + "\r\n";
-		byte[] buffer = toSend.getBytes(StandardCharsets.US_ASCII);
-		int ret = serialPort.writeBytes(buffer, buffer.length);
-		serialLog.append("> " + toSend);
 
-		if (ret != buffer.length) {
-			System.err.format("Tried to write %d bytes to serial, but instead wrote %d\n", buffer.length, ret);
-		}
+		serialGrbl.sendGcode(gcode);
+		serialLog.append("> " + gcode + "\n");
 	}
 
 	public MachineConfig getMachineConfig() {

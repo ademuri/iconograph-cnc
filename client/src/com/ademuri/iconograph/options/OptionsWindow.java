@@ -108,7 +108,7 @@ public class OptionsWindow extends JFrame implements KeyListener {
 		Font defaultFont = new Font("Dialog", Font.PLAIN, getTextSize());
 
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		setBounds(100, 100, (int) (450 * monitorScale), (int) (900 * monitorScale));
+		setBounds(100, 100, (int) (450 * monitorScale), (int) (1000 * monitorScale));
 		contentPane = new JPanel();
 		contentPane.setBorder(new EmptyBorder(5, 5, 5, 5));
 		setContentPane(contentPane);
