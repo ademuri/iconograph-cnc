@@ -129,11 +129,6 @@ public class OptionsWindow extends JFrame implements KeyListener {
 		btnLoadSvg = new JButton("Load SVG");
 		btnLoadSvg.setFont(defaultFont);
 		btnLoadSvg.addActionListener(event -> {
-			setFontSize(fileChooser.getComponents());
-			fileChooser.setPreferredSize(new Dimension(getProcessingWidth(), getProcessingHeight()));
-			FileFilter svgFilter = new FileNameExtensionFilter("SVG files", "svg");
-			fileChooser.addChoosableFileFilter(svgFilter);
-			fileChooser.setFileFilter(svgFilter);
 			int r = fileChooser.showOpenDialog(this);
 			if (r == JFileChooser.APPROVE_OPTION) {
 				canvasViewer.loadSvg(fileChooser.getSelectedFile().getAbsolutePath());
@@ -314,6 +309,15 @@ public class OptionsWindow extends JFrame implements KeyListener {
 		calPanel.add(panel_10);
 		panel_10.add(btnCornerCalibration);
 		
+		JButton btnGridCalibration = new JButton("Grid");
+		btnGridCalibration.setFont(defaultFont);
+		btnGridCalibration.addActionListener(event -> {
+			canvasViewer.createGridCalibration();
+		});
+		JPanel panel_11 = new JPanel();
+		calPanel.add(panel_11);
+		panel_11.add(btnGridCalibration);
+		
 		machinePanel = new MachinePanel(defaultFont, ini, canvasViewer);
 		tabbedPane.addTab("Machine", machinePanel);
 
@@ -340,14 +344,20 @@ public class OptionsWindow extends JFrame implements KeyListener {
 		canvasViewer.setSize(getProcessingWidth(), getProcessingHeight());
 		canvasViewer.setOptionsWindow(this);
 		canvasViewer.setMachineConfig(machinePanel.getMachineConfig());
+		
+		setFontSize(fileChooser.getComponents(), getTextSize());
+		fileChooser.setPreferredSize(new Dimension(getProcessingWidth(), getProcessingHeight()));
+		FileFilter svgFilter = new FileNameExtensionFilter("SVG files", "svg");
+		fileChooser.addChoosableFileFilter(svgFilter);
+		fileChooser.setFileFilter(svgFilter);
 	}
 
-	private void setFontSize(Component[] components) {
+	public static void setFontSize(Component[] components, int textSize) {
 		for (Component component : components) {
 			if (component instanceof Container) {
-				setFontSize(((Container) component).getComponents());
+				setFontSize(((Container) component).getComponents(), textSize);
 			}
-			component.setFont(new Font("Dialog", Font.PLAIN, getTextSize()));
+			component.setFont(new Font("Dialog", Font.PLAIN, textSize));
 		}
 	}
 

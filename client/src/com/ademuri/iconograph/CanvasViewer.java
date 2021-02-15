@@ -224,7 +224,7 @@ public class CanvasViewer extends PApplet {
 		synchronized (this) {
 			lineMap = new HashMap<>();
 			lineMap.put(Color.black(), lines);
-			//slider.getControl().setNumberOfTickMarks(lines.size() + 1).setRange(0, lines.size()).setValue(lines.size());
+			slider.getControl().setNumberOfTickMarks(lines.size() + 1).setRange(0, lines.size()).setValue(lines.size());
 		}
 	}
 
@@ -238,6 +238,7 @@ public class CanvasViewer extends PApplet {
 				lines.add(new ArrayList<>(List.of(new Point(machine.canvasWidth() - 20, 20 + offset),
 						new Point(machine.canvasWidth() - 20, 20 + offset + step))));
 			}
+			lineMap.put(Color.black(), lines);
 			slider.getControl().setNumberOfTickMarks(lines.size() + 1).setRange(0, lines.size()).setValue(lines.size());
 		}
 	}
@@ -252,7 +253,7 @@ public class CanvasViewer extends PApplet {
 			lines.add(new ArrayList<>(List.of(new Point(0, machine.canvasHeight()), new Point(0, 0))));
 
 			lines = Point.interpolateLines(lines, maxLineSegmentLength);
-
+			lineMap.put(Color.black(), lines);
 			slider.getControl().setNumberOfTickMarks(lines.size() + 1).setRange(0, lines.size()).setValue(lines.size());
 		}
 	}
@@ -267,7 +268,26 @@ public class CanvasViewer extends PApplet {
 			lines.add(new ArrayList<>(List.of(new Point(0, machine.canvasHeight()), new Point(0, 0))));
 
 			lines = Point.interpolateLines(lines, maxLineSegmentLength);
-
+			lineMap.put(Color.black(), lines);
+			slider.getControl().setNumberOfTickMarks(lines.size() + 1).setRange(0, lines.size()).setValue(lines.size());
+		}
+	}
+	
+	public void createGridCalibration() {
+		synchronized (this) {
+			List<List<Point>> lines = new ArrayList<>();
+			double xStep = 8;
+			double yStep = 8;
+			for (double x = xStep; x < machine.canvasWidth(); x += xStep) {
+				lines.add(new ArrayList<>(List.of(new Point(x, 0), new Point(x, machine.canvasHeight()))));
+			}
+			for (double y = yStep; y < machine.canvasHeight(); y += yStep) {
+				lines.add(new ArrayList<>(List.of(new Point(0, y), new Point(machine.canvasWidth(), y))));
+			}
+			lines = Point.interpolateLines(lines, maxLineSegmentLength);
+			lines = sort(lines);
+			
+			lineMap.put(Color.black(), lines);
 			slider.getControl().setNumberOfTickMarks(lines.size() + 1).setRange(0, lines.size()).setValue(lines.size());
 		}
 	}

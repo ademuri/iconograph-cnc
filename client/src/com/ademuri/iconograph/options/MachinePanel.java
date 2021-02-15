@@ -1,6 +1,7 @@
 package com.ademuri.iconograph.options;
 
 import java.awt.Color;
+import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -10,12 +11,15 @@ import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
+import java.util.prefs.Preferences;
 
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
+import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
@@ -23,6 +27,8 @@ import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
+import javax.swing.filechooser.FileFilter;
+import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.text.BadLocationException;
 
 import org.ini4j.Ini;
@@ -48,6 +54,7 @@ public class MachinePanel extends JPanel {
 	private DistanceInput probeY;
 
 	private final JTextArea serialLog;
+	private final JFileChooser fileChooser = new JFileChooser();
 	private final SerialGrbl serialGrbl = new SerialGrbl();
 
 	public MachinePanel(Font defaultFont, Ini ini, CanvasViewer canvasViewer) {
@@ -246,6 +253,12 @@ public class MachinePanel extends JPanel {
 		JButton loadGcode = new JButton("Load Gcode");
 		loadGcode.setFont(defaultFont);
 		gcodeButtonPanel.add(loadGcode);
+		loadGcode.addActionListener(event -> {
+			int r = fileChooser.showOpenDialog(this);
+			if (r == JFileChooser.APPROVE_OPTION) {
+				canvasViewer.loadSvg(fileChooser.getSelectedFile().getAbsolutePath());
+			}
+		});
 		
 		JButton sendGcode = new JButton("Send Gcode");
 		sendGcode.setFont(defaultFont);
@@ -263,6 +276,12 @@ public class MachinePanel extends JPanel {
 		
 		JScrollPane scrollPane = new JScrollPane(contentPanel);
 		add(scrollPane);
+		
+		OptionsWindow.setFontSize(fileChooser.getComponents(), defaultFont.getSize());
+		fileChooser.setPreferredSize(new Dimension());
+		FileFilter svgFilter = new FileNameExtensionFilter("SVG files", "svg");
+		fileChooser.addChoosableFileFilter(svgFilter);
+		fileChooser.setFileFilter(svgFilter);
 	}
 	
 	private void sendGcode(String gcode) {
