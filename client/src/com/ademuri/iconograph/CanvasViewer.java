@@ -606,8 +606,8 @@ public class CanvasViewer extends PApplet {
 			BufferedWriter writer = Files.newBufferedWriter(Path.of(String.format("out_%d.gcode", index)));
 			writer.append(String.format("; For color %s\n", color));
 			writer.append("G90 ; Absolute positioning\n");
-			writer.append(String.format("$120=%.2f ; X-Axis acceleration\n", config.acceleration()));
-			writer.append(String.format("$121=%.2f ; Y-Axis acceleration\n", config.acceleration()));
+			writer.append(String.format("; X-Axis acceleration\n$120=%.2f\n", config.acceleration()));
+			writer.append(String.format("; Y-Axis acceleration\n$121=%.2f\n", config.acceleration()));
 			writer.append("\n");
 			
 			/*
@@ -683,8 +683,8 @@ public class CanvasViewer extends PApplet {
 			writer.append(String.format("G01 F%f X%.3f Y%.3f\n\n", config.travelSpeed(), finalPositionBelt.x,
 					finalPositionBelt.y));
 
-			writer.append(String.format("$120=%.2f ; X-Axis acceleration\n", DEFAULT_ACCELERATION));
-			writer.append(String.format("$121=%.2f ; Y-Axis acceleration\n\n", DEFAULT_ACCELERATION));
+			writer.append(String.format("; X-Axis acceleration\n$120=%.2f\n", DEFAULT_ACCELERATION));
+			writer.append(String.format("; Y-Axis acceleration\n$121=%.2f\n\n", DEFAULT_ACCELERATION));
 			writer.close();
 		} catch (IOException e) {
 			e.printStackTrace();
