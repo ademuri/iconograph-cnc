@@ -617,8 +617,8 @@ public class CanvasViewer extends PApplet {
 			writer.append("G04 P0.5 ; Delay for 0.5s\n");
 			writer.append("G38.2 F200 Z-20; Probe toward canvas, stop on 'contact', error on failure\n");
 			writer.append("G92 Z1.3 ; Reset Z to sensor height\n");
-			writer.append("G01 Z8 F400 ; Raise Z\n\n");
-			*/
+			//writer.append("G01 Z8 F400 ; Raise Z\n\n");
+			 */
 			writer.append("G01 Z5 F400 ; Raise Z\n\n");
 
 			boolean penDown = false;

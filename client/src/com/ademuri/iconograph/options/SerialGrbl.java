@@ -119,6 +119,10 @@ public class SerialGrbl {
 		}
 	}
 	
+	public long getBufferSize() {
+		return writeBuffer.size();
+	}
+	
 	/** Writes out one gcode from the buffer */
 	private boolean unbufferGcode() {
 		if (writeBuffer.isEmpty()) {

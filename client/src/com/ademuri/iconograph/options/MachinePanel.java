@@ -204,7 +204,6 @@ public class MachinePanel extends JPanel {
 		serialLog.setFont(defaultFont);
 		serialLog.setEditable(false);
 		JScrollPane serialScroll = new JScrollPane(serialLog);
-		serialGrbl.setSentCallback(sent -> appendToSerialLog(sent));
 
 		JButton connectButton = new JButton("Connect");
 		connectButton.setFont(defaultFont);
@@ -298,6 +297,11 @@ public class MachinePanel extends JPanel {
 		if (!prefs.get(LAST_DIR_GCODE, "").isEmpty()) {
 			fileChooser.setCurrentDirectory(new File(prefs.get(LAST_DIR_GCODE, "")));
 		}
+		
+		serialGrbl.setSentCallback(sent -> {
+			appendToSerialLog(sent);
+			gcodeFile.setText("Remaining: " + serialGrbl.getBufferSize());
+		});
 	}
 	
 	private void appendToSerialLog(String line) {
