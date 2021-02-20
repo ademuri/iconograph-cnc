@@ -54,7 +54,9 @@ public class SerialGrbl {
 				
 				if (s.strip().equals("ok")) {
 					synchronized(writeBuffer) {
-						unbufferGcode();
+						if (writeState == WriteState.WRITE) {
+							unbufferGcode();
+						}
 					}
 				} else {
 					System.err.format("Got non-ok response from GRBL: %s\n", s);
@@ -143,6 +145,10 @@ public class SerialGrbl {
 		}
 		
 		return true;
+	}
+	
+	public boolean isPaused() {
+		return this.writeState == WriteState.PAUSE;
 	}
 	
 	public void pause() {

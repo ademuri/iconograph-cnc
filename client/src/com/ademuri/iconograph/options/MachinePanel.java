@@ -61,6 +61,7 @@ public class MachinePanel extends JPanel {
 	private final JTextArea serialLog;
 	private final JFileChooser fileChooser = new JFileChooser();
 	private final SerialGrbl serialGrbl = new SerialGrbl();
+	private final JLabel sendProgress;
 	
 	private List<String> loadedGcode = null;
 
@@ -243,11 +244,64 @@ public class MachinePanel extends JPanel {
 		gcodePanel.setLayout(new BoxLayout(gcodePanel, BoxLayout.Y_AXIS));
 		control.add(gcodePanel);
 		JPanel gcodeButtonPanel = new JPanel();
+		//gcodeButtonPanel.setLayout(new );
 		gcodePanel.add(gcodeButtonPanel);
 		
 		JButton loadGcode = new JButton("Load Gcode");
 		loadGcode.setFont(defaultFont);
 		gcodeButtonPanel.add(loadGcode);
+		
+		JButton sendGcode = new JButton("Send Gcode");
+		sendGcode.setFont(defaultFont);
+		gcodeButtonPanel.add(sendGcode);
+		sendGcode.addActionListener(event -> {
+			serialGrbl.sendGcode(loadedGcode);
+			setRemaining(serialGrbl.getBufferSize());
+		});
+		
+		JButton pauseGcode = new JButton("Pause   ");
+		pauseGcode.setFont(defaultFont);
+		gcodeButtonPanel.add(pauseGcode);
+		pauseGcode.addActionListener(event -> {
+			if (serialGrbl.isPaused()) {
+				serialGrbl.unpause();
+				pauseGcode.setText("Pause   ");
+			} else {
+				serialGrbl.pause();
+				pauseGcode.setText("Resume");
+			}
+		});
+		
+		JButton clearGcode = new JButton("Clear");
+		clearGcode.setFont(defaultFont);
+		gcodeButtonPanel.add(clearGcode);
+		clearGcode.addActionListener(event -> {
+			serialGrbl.clearBuffer();
+			setRemaining(0);
+		});
+		
+		JPanel gcodeStatusPanel = new JPanel();
+		gcodeStatusPanel.setLayout(new BoxLayout(gcodeStatusPanel, BoxLayout.Y_AXIS));
+		gcodePanel.add(gcodeStatusPanel);
+		
+		JLabel gcodeFile = new JLabel("No g-code loaded");
+		gcodeFile.setFont(defaultFont);
+		gcodeStatusPanel.add(gcodeFile);
+		
+		sendProgress = new JLabel("  ");
+		sendProgress.setFont(defaultFont);
+		gcodeStatusPanel.add(sendProgress);
+		
+		JScrollPane scrollPane = new JScrollPane(contentPanel);
+		scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+		add(scrollPane);
+		
+		OptionsWindow.setFontSize(fileChooser.getComponents(), defaultFont.getSize());
+		fileChooser.setPreferredSize(new Dimension(800, 600));
+		FileFilter svgFilter = new FileNameExtensionFilter("G-Code files", "gcode");
+		fileChooser.addChoosableFileFilter(svgFilter);
+		fileChooser.setFileFilter(svgFilter);
+		
 		loadGcode.addActionListener(event -> {
 			int r = fileChooser.showOpenDialog(this);
 			if (r == JFileChooser.APPROVE_OPTION) {
@@ -258,40 +312,9 @@ public class MachinePanel extends JPanel {
 				} catch (IOException e1) {
 					e1.printStackTrace();
 				}
+				gcodeFile.setText(fileChooser.getSelectedFile().getName());
 			}
 		});
-		
-		JButton sendGcode = new JButton("Send Gcode");
-		sendGcode.setFont(defaultFont);
-		gcodeButtonPanel.add(sendGcode);
-		sendGcode.addActionListener(event -> {
-			serialGrbl.sendGcode(loadedGcode);
-		});
-		
-		JButton pauseGcode = new JButton("Pause");
-		pauseGcode.setFont(defaultFont);
-		gcodeButtonPanel.add(pauseGcode);
-		
-		JButton clearGcode = new JButton("Clear");
-		clearGcode.setFont(defaultFont);
-		gcodeButtonPanel.add(clearGcode);
-		clearGcode.addActionListener(event -> serialGrbl.clearBuffer());
-		
-		JPanel gcodeStatusPanel = new JPanel();
-		gcodePanel.add(gcodeStatusPanel);
-		
-		JLabel gcodeFile = new JLabel("No g-code loaded");
-		gcodeFile.setFont(defaultFont);
-		gcodeStatusPanel.add(gcodeFile);
-		
-		JScrollPane scrollPane = new JScrollPane(contentPanel);
-		add(scrollPane);
-		
-		OptionsWindow.setFontSize(fileChooser.getComponents(), defaultFont.getSize());
-		fileChooser.setPreferredSize(new Dimension(800, 600));
-		FileFilter svgFilter = new FileNameExtensionFilter("G-Code files", "gcode");
-		fileChooser.addChoosableFileFilter(svgFilter);
-		fileChooser.setFileFilter(svgFilter);
 		
 		Preferences prefs = Preferences.userRoot().node(getClass().getName());
 		if (!prefs.get(LAST_DIR_GCODE, "").isEmpty()) {
@@ -300,8 +323,12 @@ public class MachinePanel extends JPanel {
 		
 		serialGrbl.setSentCallback(sent -> {
 			appendToSerialLog(sent);
-			gcodeFile.setText("Remaining: " + serialGrbl.getBufferSize());
+			setRemaining(serialGrbl.getBufferSize());
 		});
+	}
+	
+	private void setRemaining(long remaining) {
+		sendProgress.setText("Remaining: " + remaining);
 	}
 	
 	private void appendToSerialLog(String line) {
