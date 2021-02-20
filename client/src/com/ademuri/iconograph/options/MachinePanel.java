@@ -2,6 +2,7 @@ package com.ademuri.iconograph.options;
 
 import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -24,6 +25,7 @@ import java.util.prefs.Preferences;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
+import javax.swing.JComponent;
 import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -70,6 +72,7 @@ public class MachinePanel extends JPanel {
 	private final JLabel sendTime;
 	private final JScrollPane serialScroll;
 	private final Stopwatch sendStopwatch = Stopwatch.createUnstarted();
+	private long commandsSent = 0;
 	
 	private List<String> loadedGcode = null;
 
@@ -209,7 +212,7 @@ public class MachinePanel extends JPanel {
 		});
 		serialButtonPanel.add(refreshButton);
 
-		serialLog = new JTextArea(10, 24);
+		serialLog = new JTextArea(10, 16);
 		serialLog.setFont(defaultFont);
 		serialLog.setEditable(false);
 		serialLog.setAutoscrolls(true);
@@ -252,26 +255,33 @@ public class MachinePanel extends JPanel {
 		
 		JPanel gcodePanel = new JPanel();
 		gcodePanel.setLayout(new BoxLayout(gcodePanel, BoxLayout.Y_AXIS));
+		//gcodePanel.setBorder(new LineBorder(Color.RED));
 		control.add(gcodePanel);
-		JPanel gcodeButtonPanel = new JPanel();
-		//gcodeButtonPanel.setLayout(new );
-		gcodePanel.add(gcodeButtonPanel);
+		
+		JPanel gcodeLoadButtonPanel = new JPanel();
+		gcodeLoadButtonPanel.setAlignmentX(JPanel.CENTER_ALIGNMENT);
+		gcodePanel.add(gcodeLoadButtonPanel);
 		
 		JButton loadGcode = new JButton("Load Gcode");
 		loadGcode.setFont(defaultFont);
-		gcodeButtonPanel.add(loadGcode);
+		gcodeLoadButtonPanel.add(loadGcode);
 		
 		JButton sendGcode = new JButton("Send Gcode");
 		sendGcode.setFont(defaultFont);
-		gcodeButtonPanel.add(sendGcode);
+		gcodeLoadButtonPanel.add(sendGcode);
 		
+		JPanel gcodeControlButtonPanel = new JPanel();
+		gcodeControlButtonPanel.setAlignmentX(JPanel.CENTER_ALIGNMENT);
+		gcodePanel.add(gcodeControlButtonPanel);
 		
 		JButton pauseGcode = new JButton("Pause   ");
 		pauseGcode.setFont(defaultFont);
-		gcodeButtonPanel.add(pauseGcode);
+		gcodeControlButtonPanel.add(pauseGcode);
 		pauseGcode.addActionListener(event -> {
 			if (serialGrbl.isPaused()) {
-				sendStopwatch.start();
+				if (!sendStopwatch.isRunning()) {
+					sendStopwatch.start();
+				}
 				serialGrbl.unpause();
 				pauseGcode.setText("Pause   ");
 			} else {
@@ -282,6 +292,7 @@ public class MachinePanel extends JPanel {
 		});
 		
 		sendGcode.addActionListener(event -> {
+			commandsSent = 0;
 			sendStopwatch.reset();
 			sendStopwatch.start();
 			serialGrbl.sendGcode(loadedGcode);
@@ -291,7 +302,7 @@ public class MachinePanel extends JPanel {
 		
 		JButton clearGcode = new JButton("Clear");
 		clearGcode.setFont(defaultFont);
-		gcodeButtonPanel.add(clearGcode);
+		gcodeControlButtonPanel.add(clearGcode);
 		clearGcode.addActionListener(event -> {
 			serialGrbl.clearBuffer();
 			setRemaining(0);
@@ -302,18 +313,22 @@ public class MachinePanel extends JPanel {
 		
 		JPanel gcodeStatusPanel = new JPanel();
 		gcodeStatusPanel.setLayout(new BoxLayout(gcodeStatusPanel, BoxLayout.Y_AXIS));
+		//gcodeStatusPanel.setBorder(new LineBorder(Color.BLUE));
+		gcodeStatusPanel.setAlignmentX(JPanel.LEFT_ALIGNMENT);
 		gcodePanel.add(gcodeStatusPanel);
 		
 		JLabel gcodeFile = new JLabel("No g-code loaded");
 		gcodeFile.setFont(defaultFont);
 		gcodeStatusPanel.add(gcodeFile);
 		
-		sendProgress = new JLabel(" ");
+		sendProgress = new JLabel("          ");
 		sendProgress.setFont(defaultFont);
 		gcodeStatusPanel.add(sendProgress);
 		
-		sendTime = new JLabel(" ");
+		sendTime = new JLabel("Elapsed:  0:00:00 /  0:00:00");
 		sendTime.setFont(defaultFont);
+		sendTime.setBorder(new LineBorder(Color.BLACK));
+		sendTime.setAlignmentX(JComponent.LEFT_ALIGNMENT);
 		gcodeStatusPanel.add(sendTime);
 		
 		JScrollPane scrollPane = new JScrollPane(contentPanel);
@@ -347,6 +362,10 @@ public class MachinePanel extends JPanel {
 		
 		serialGrbl.setSentCallback(sent -> {
 			SwingUtilities.invokeLater(() -> {
+				//if (sent.startsWith("G0")) {
+					// Roughly, only count movement commands
+					commandsSent++;
+				//}
 				appendToSerialLog(sent);
 				setRemaining(serialGrbl.getBufferSize());
 				if (serialGrbl.getBufferSize() == 0 && sendStopwatch.isRunning()) {
@@ -357,7 +376,17 @@ public class MachinePanel extends JPanel {
 		
 		Timer sendTimeUpdater = new Timer(1000, event -> {
 			Duration elapsed = sendStopwatch.elapsed();
-			sendTime.setText(String.format("Elapsed: %2d:%02d:%02d", elapsed.toHoursPart(), elapsed.toMinutesPart(), elapsed.toSecondsPart()));
+			double nanosRemaining = 0;
+			if (commandsSent > 0) {
+				double nanosPerCommand = ((double) elapsed.getNano()) / commandsSent;
+				nanosRemaining = nanosPerCommand * serialGrbl.getBufferSize();
+				System.out.format("nanosPerCommand: %f, nanosRemaining: %f\n", nanosPerCommand, nanosRemaining);
+			}
+			Duration remaining = Duration.ofNanos((long) nanosRemaining);
+			System.out.println((long) nanosRemaining);
+			sendTime.setText(String.format("Elapsed: %2d:%02d:%02d / %2d:%02d:%02d",
+					elapsed.toHoursPart(), elapsed.toMinutesPart(), elapsed.toSecondsPart(),
+					remaining.toHoursPart(), remaining.toMinutesPart(), remaining.toSecondsPart()));
 		});
 		sendTimeUpdater.setRepeats(true);
 		sendTimeUpdater.start();
