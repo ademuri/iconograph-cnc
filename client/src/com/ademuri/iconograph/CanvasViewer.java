@@ -472,8 +472,8 @@ public class CanvasViewer extends PApplet {
 	public void mouseDragged() {
 		if (mouseX > canvasStart.x && mouseX < canvasStart.x + machine.canvasWidth() * canvasScale && mouseY > canvasStart.y
 				&& mouseY < canvasStart.y + machine.canvasHeight() * canvasScale) {
-			offsetX = offsetX + mouseX - mouseStartX;
-			offsetY = offsetY + mouseY - mouseStartY;
+			offsetX = offsetX + (mouseX - mouseStartX) / canvasScale;
+			offsetY = offsetY + (mouseY - mouseStartY) / canvasScale;
 			mouseStartX = mouseX;
 			mouseStartY = mouseY;
 
