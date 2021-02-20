@@ -29,5 +29,10 @@
 		</attributes>
 	</classpathentry>
 	<classpathentry kind="lib" path="deps/jSerialComm-2.6.2.jar"/>
+	<classpathentry kind="lib" path="deps/guava/guava-30.1-jre.jar" sourcepath="deps/guava/guava-30.1-jre-sources.jar">
+		<attributes>
+			<attribute name="javadoc_location" value="jar:platform:/resource/iconograph-client/deps/guava/guava-30.1-jre-javadoc.jar!/"/>
+		</attributes>
+	</classpathentry>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

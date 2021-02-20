@@ -28,4 +28,11 @@ popd
 
 wget https://fazecast.github.io/jSerialComm/binaries/jSerialComm-2.6.2.jar
 
+mkdir -p guava
+pushd guava
+wget https://repo1.maven.org/maven2/com/google/guava/guava/30.1-jre/guava-30.1-jre.jar
+wget https://repo1.maven.org/maven2/com/google/guava/guava/30.1-jre/guava-30.1-jre-sources.jar
+wget https://repo1.maven.org/maven2/com/google/guava/guava/30.1-jre/guava-30.1-jre-javadoc.jar
+popd
+
 popd

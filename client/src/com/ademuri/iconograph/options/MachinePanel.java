@@ -15,6 +15,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
@@ -31,6 +32,7 @@ import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
+import javax.swing.Timer;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
 import javax.swing.filechooser.FileFilter;
@@ -43,6 +45,7 @@ import com.ademuri.iconograph.CanvasViewer;
 import com.fazecast.jSerialComm.SerialPort;
 import com.fazecast.jSerialComm.SerialPortDataListenerWithExceptions;
 import com.fazecast.jSerialComm.SerialPortEvent;
+import com.google.common.base.Stopwatch;
 
 public class MachinePanel extends JPanel {
 	private static final String MACHINE_CONFIG = "machine";
@@ -64,7 +67,9 @@ public class MachinePanel extends JPanel {
 	private final JFileChooser fileChooser = new JFileChooser();
 	private final SerialGrbl serialGrbl = new SerialGrbl();
 	private final JLabel sendProgress;
+	private final JLabel sendTime;
 	private final JScrollPane serialScroll;
+	private final Stopwatch sendStopwatch = Stopwatch.createUnstarted();
 	
 	private List<String> loadedGcode = null;
 
@@ -259,22 +264,29 @@ public class MachinePanel extends JPanel {
 		JButton sendGcode = new JButton("Send Gcode");
 		sendGcode.setFont(defaultFont);
 		gcodeButtonPanel.add(sendGcode);
-		sendGcode.addActionListener(event -> {
-			serialGrbl.sendGcode(loadedGcode);
-			setRemaining(serialGrbl.getBufferSize());
-		});
+		
 		
 		JButton pauseGcode = new JButton("Pause   ");
 		pauseGcode.setFont(defaultFont);
 		gcodeButtonPanel.add(pauseGcode);
 		pauseGcode.addActionListener(event -> {
 			if (serialGrbl.isPaused()) {
+				sendStopwatch.start();
 				serialGrbl.unpause();
 				pauseGcode.setText("Pause   ");
 			} else {
+				sendStopwatch.stop();
 				serialGrbl.pause();
 				pauseGcode.setText("Resume");
 			}
+		});
+		
+		sendGcode.addActionListener(event -> {
+			sendStopwatch.reset();
+			sendStopwatch.start();
+			serialGrbl.sendGcode(loadedGcode);
+			setRemaining(serialGrbl.getBufferSize());
+			pauseGcode.setText("Pause   ");
 		});
 		
 		JButton clearGcode = new JButton("Clear");
@@ -283,6 +295,9 @@ public class MachinePanel extends JPanel {
 		clearGcode.addActionListener(event -> {
 			serialGrbl.clearBuffer();
 			setRemaining(0);
+			if (sendStopwatch.isRunning()) {
+				sendStopwatch.stop();
+			}
 		});
 		
 		JPanel gcodeStatusPanel = new JPanel();
@@ -293,9 +308,13 @@ public class MachinePanel extends JPanel {
 		gcodeFile.setFont(defaultFont);
 		gcodeStatusPanel.add(gcodeFile);
 		
-		sendProgress = new JLabel("  ");
+		sendProgress = new JLabel(" ");
 		sendProgress.setFont(defaultFont);
 		gcodeStatusPanel.add(sendProgress);
+		
+		sendTime = new JLabel(" ");
+		sendTime.setFont(defaultFont);
+		gcodeStatusPanel.add(sendTime);
 		
 		JScrollPane scrollPane = new JScrollPane(contentPanel);
 		scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
@@ -327,9 +346,21 @@ public class MachinePanel extends JPanel {
 		}
 		
 		serialGrbl.setSentCallback(sent -> {
-			appendToSerialLog(sent);
-			setRemaining(serialGrbl.getBufferSize());
+			SwingUtilities.invokeLater(() -> {
+				appendToSerialLog(sent);
+				setRemaining(serialGrbl.getBufferSize());
+				if (serialGrbl.getBufferSize() == 0 && sendStopwatch.isRunning()) {
+					sendStopwatch.stop();
+				}
+			});
 		});
+		
+		Timer sendTimeUpdater = new Timer(1000, event -> {
+			Duration elapsed = sendStopwatch.elapsed();
+			sendTime.setText(String.format("Elapsed: %2d:%02d:%02d", elapsed.toHoursPart(), elapsed.toMinutesPart(), elapsed.toSecondsPart()));
+		});
+		sendTimeUpdater.setRepeats(true);
+		sendTimeUpdater.start();
 	}
 	
 	private void setRemaining(long remaining) {
