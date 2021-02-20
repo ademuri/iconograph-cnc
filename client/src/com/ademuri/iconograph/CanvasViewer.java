@@ -683,6 +683,7 @@ public class CanvasViewer extends PApplet {
 			writer.append(String.format("G01 F%f X%.3f Y%.3f\n\n", config.travelSpeed(), finalPositionBelt.x,
 					finalPositionBelt.y));
 
+			writer.append("G04 P0.1 ; Wait for machine idle\n");
 			writer.append(String.format("; X-Axis acceleration\n$120=%.2f\n", DEFAULT_ACCELERATION));
 			writer.append(String.format("; Y-Axis acceleration\n$121=%.2f\n\n", DEFAULT_ACCELERATION));
 			writer.close();

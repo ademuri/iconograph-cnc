@@ -362,10 +362,7 @@ public class MachinePanel extends JPanel {
 		
 		serialGrbl.setSentCallback(sent -> {
 			SwingUtilities.invokeLater(() -> {
-				//if (sent.startsWith("G0")) {
-					// Roughly, only count movement commands
-					commandsSent++;
-				//}
+				commandsSent++;
 				appendToSerialLog(sent);
 				setRemaining(serialGrbl.getBufferSize());
 				if (serialGrbl.getBufferSize() == 0 && sendStopwatch.isRunning()) {
@@ -378,12 +375,10 @@ public class MachinePanel extends JPanel {
 			Duration elapsed = sendStopwatch.elapsed();
 			double nanosRemaining = 0;
 			if (commandsSent > 0) {
-				double nanosPerCommand = ((double) elapsed.getNano()) / commandsSent;
+				double nanosPerCommand = ((double) elapsed.toNanos()) / commandsSent;
 				nanosRemaining = nanosPerCommand * serialGrbl.getBufferSize();
-				System.out.format("nanosPerCommand: %f, nanosRemaining: %f\n", nanosPerCommand, nanosRemaining);
 			}
 			Duration remaining = Duration.ofNanos((long) nanosRemaining);
-			System.out.println((long) nanosRemaining);
 			sendTime.setText(String.format("Elapsed: %2d:%02d:%02d / %2d:%02d:%02d",
 					elapsed.toHoursPart(), elapsed.toMinutesPart(), elapsed.toSecondsPart(),
 					remaining.toHoursPart(), remaining.toMinutesPart(), remaining.toSecondsPart()));
