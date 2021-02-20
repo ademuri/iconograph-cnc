@@ -26,9 +26,11 @@ import javax.swing.JComboBox;
 import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JScrollBar;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
+import javax.swing.SwingUtilities;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
 import javax.swing.filechooser.FileFilter;
@@ -62,6 +64,7 @@ public class MachinePanel extends JPanel {
 	private final JFileChooser fileChooser = new JFileChooser();
 	private final SerialGrbl serialGrbl = new SerialGrbl();
 	private final JLabel sendProgress;
+	private final JScrollPane serialScroll;
 	
 	private List<String> loadedGcode = null;
 
@@ -204,7 +207,9 @@ public class MachinePanel extends JPanel {
 		serialLog = new JTextArea(10, 24);
 		serialLog.setFont(defaultFont);
 		serialLog.setEditable(false);
-		JScrollPane serialScroll = new JScrollPane(serialLog);
+		serialLog.setAutoscrolls(true);
+		serialScroll = new JScrollPane(serialLog);
+		serialScroll.setAutoscrolls(true);
 
 		JButton connectButton = new JButton("Connect");
 		connectButton.setFont(defaultFont);
@@ -343,6 +348,11 @@ public class MachinePanel extends JPanel {
 				e.printStackTrace();
 			}
 		}
+		
+		SwingUtilities.invokeLater(() -> {
+			JScrollBar bar = serialScroll.getVerticalScrollBar();
+			bar.setValue(bar.getMaximum());
+		});
 	}
 	
 	private void sendGcode(String gcode) {
