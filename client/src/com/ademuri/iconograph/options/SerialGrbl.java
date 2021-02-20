@@ -2,6 +2,7 @@ package com.ademuri.iconograph.options;
 
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -17,7 +18,11 @@ public class SerialGrbl {
 		PAUSE,
 	}
 	
-	private final ConcurrentLinkedQueue<String> writeBuffer = new ConcurrentLinkedQueue<>();
+	private static final int RECEIVE_BUFFER_SIZE = 128; 
+	
+	private final ConcurrentLinkedDeque<String> writeBuffer = new ConcurrentLinkedDeque<>();
+	private final ConcurrentLinkedQueue<String> awaitingOkBuffer = new ConcurrentLinkedQueue<>();
+	private long bufferSize = 0;
 	private WriteState writeState = WriteState.WRITE;
 	private SerialPort serialPort = null;
 	private Consumer<String> receivedCallback = null;
@@ -43,7 +48,6 @@ public class SerialGrbl {
 			return false;
 		}
 		
-		
 		serialPort.addDataListener(new SerialPortMessageListenerWithExceptions() {
 			@Override
 			public void serialEvent(SerialPortEvent event) {
@@ -54,6 +58,7 @@ public class SerialGrbl {
 				
 				if (s.strip().equals("ok")) {
 					synchronized(writeBuffer) {
+						awaitingOkBuffer.poll();
 						if (writeState == WriteState.WRITE) {
 							unbufferGcode();
 						}
@@ -71,6 +76,7 @@ public class SerialGrbl {
 
 			@Override
 			public void catchException(Exception arg0) {
+				writeState = WriteState.PAUSE;
 				arg0.printStackTrace();
 			}
 
@@ -81,7 +87,6 @@ public class SerialGrbl {
 
 			@Override
 			public byte[] getMessageDelimiter() {
-				// TODO Auto-generated method stub
 				return "\n".getBytes();
 			}
 		});
@@ -94,16 +99,24 @@ public class SerialGrbl {
 			serialPort.removeDataListener();
 			serialPort.closePort();
 		}
+		
+		for (String unsent : awaitingOkBuffer) {
+			// These commands weren't OK'd, so re-add them to be sent.
+			writeBuffer.addFirst(unsent);
+		}
+		awaitingOkBuffer.clear();
+		writeState = WriteState.PAUSE;
 	}
 	
 	public void sendGcode(List<String> gcode) {
-		if (serialPort == null || !serialPort.isOpen()) {
+		if (serialPort == null || !serialPort.isOpen() || gcode == null || gcode.isEmpty()) {
 			return;
 		}
 		
 		synchronized(writeBuffer) {
 			boolean wasEmpty = writeBuffer.isEmpty();
 			writeBuffer.addAll(gcode);
+			bufferSize = writeBuffer.size();
 			if (wasEmpty) {
 				writeState = WriteState.WRITE;
 				unbufferGcode();
@@ -122,7 +135,7 @@ public class SerialGrbl {
 	}
 	
 	public long getBufferSize() {
-		return writeBuffer.size();
+		return bufferSize;
 	}
 	
 	/** Writes out one gcode from the buffer */
@@ -131,17 +144,32 @@ public class SerialGrbl {
 			return true;
 		}
 		
-		String toSend = writeBuffer.poll() + "\n";
-		byte[] buffer = toSend.getBytes(StandardCharsets.US_ASCII);
-		int ret = serialPort.writeBytes(buffer, buffer.length);
+		int receiveBufferUsed = awaitingOkBuffer.stream().mapToInt(line -> line.length()).sum();
+		while (true) {
+			String toSend = writeBuffer.peek() + "\n";
+			if (receiveBufferUsed + toSend.length() > RECEIVE_BUFFER_SIZE) {
+				break;
+			}
+			writeBuffer.poll();
+			receiveBufferUsed += toSend.length();
+			bufferSize--;
+			
+			byte[] buffer = toSend.getBytes(StandardCharsets.US_ASCII);
+			int ret = serialPort.writeBytes(buffer, buffer.length);
+			//System.out.println("Sent: " + toSend);
 
-		if (ret != buffer.length) {
-			System.err.format("Tried to write %d bytes to serial, but instead wrote %d\n", buffer.length, ret);
-			sentCallback.accept(toSend.substring(0, ret));
-			return false;
-		}
-		if (sentCallback != null) {
-			sentCallback.accept(toSend);
+			if (ret != buffer.length) {
+				System.err.format("Tried to write %d bytes to serial, but instead wrote %d\n", buffer.length, ret);
+				sentCallback.accept(toSend.substring(0, ret));
+				return false;
+			}
+			
+			awaitingOkBuffer.add(toSend);
+			
+			if (sentCallback != null) {
+				sentCallback.accept(toSend);
+			}
+			
 		}
 		
 		return true;

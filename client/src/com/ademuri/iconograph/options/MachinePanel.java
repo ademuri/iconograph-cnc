@@ -221,20 +221,6 @@ public class MachinePanel extends JPanel {
 
 		JButton connectButton = new JButton("Connect");
 		connectButton.setFont(defaultFont);
-		connectButton.addActionListener(event -> {
-			if (serialGrbl.isOpen()) {
-				serialGrbl.close();
-				connectButton.setText("Connect");
-				return;
-			}
-			if (!serialGrbl.open((String) serialPortChooser.getSelectedItem(), Integer.parseInt(baudRate.getInput().getText()))) {
-				serialLog.append("Failed to open serial port\n");
-				return;
-			}
-			
-			serialGrbl.setReceivedCallback(line -> appendToSerialLog(line));
-			connectButton.setText("Disconnect");
-		});
 		serialButtonPanel.add(connectButton);
 
 		JTextField serialSend = new JTextField();
@@ -268,6 +254,7 @@ public class MachinePanel extends JPanel {
 		
 		JButton sendGcode = new JButton("Send Gcode");
 		sendGcode.setFont(defaultFont);
+		sendGcode.setEnabled(false);
 		gcodeLoadButtonPanel.add(sendGcode);
 		
 		JPanel gcodeControlButtonPanel = new JPanel();
@@ -364,7 +351,6 @@ public class MachinePanel extends JPanel {
 			SwingUtilities.invokeLater(() -> {
 				commandsSent++;
 				appendToSerialLog(sent);
-				setRemaining(serialGrbl.getBufferSize());
 				if (serialGrbl.getBufferSize() == 0 && sendStopwatch.isRunning()) {
 					sendStopwatch.stop();
 				}
@@ -385,6 +371,37 @@ public class MachinePanel extends JPanel {
 		});
 		sendTimeUpdater.setRepeats(true);
 		sendTimeUpdater.start();
+		
+		Timer remainingUpdater = new Timer(100, event -> {
+			setRemaining(serialGrbl.getBufferSize());
+		});
+		remainingUpdater.setRepeats(true);
+		remainingUpdater.start();
+		
+		connectButton.addActionListener(event -> {
+			if (serialGrbl.isOpen()) {
+				serialGrbl.close();
+				connectButton.setText("Connect");
+				if (sendStopwatch.isRunning()) {
+					sendStopwatch.stop();
+				}
+				sendGcode.setEnabled(false);
+				pauseGcode.setText("Resume");
+				return;
+			}
+			if (!serialGrbl.open((String) serialPortChooser.getSelectedItem(), Integer.parseInt(baudRate.getInput().getText()))) {
+				serialLog.append("Failed to open serial port\n");
+				return;
+			}
+			
+			serialGrbl.setReceivedCallback(line -> {
+				SwingUtilities.invokeLater(() -> {
+					appendToSerialLog(line);
+				});
+			});
+			connectButton.setText("Disconnect");
+			sendGcode.setEnabled(true);
+		});
 	}
 	
 	private void setRemaining(long remaining) {
