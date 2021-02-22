@@ -374,6 +374,9 @@ public class MachinePanel extends JPanel {
 		
 		Timer remainingUpdater = new Timer(100, event -> {
 			setRemaining(serialGrbl.getBufferSize());
+			if (serialGrbl.isPaused() && sendStopwatch.isRunning()) {
+				sendStopwatch.stop();
+			}
 		});
 		remainingUpdater.setRepeats(true);
 		remainingUpdater.start();
