@@ -22,6 +22,11 @@ import java.util.List;
 import java.util.function.Function;
 import java.util.prefs.Preferences;
 
+import javax.sound.sampled.AudioInputStream;
+import javax.sound.sampled.AudioSystem;
+import javax.sound.sampled.Clip;
+import javax.sound.sampled.LineUnavailableException;
+import javax.sound.sampled.UnsupportedAudioFileException;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
@@ -353,8 +358,16 @@ public class MachinePanel extends JPanel {
 				appendToSerialLog(sent);
 				if (serialGrbl.getBufferSize() == 0 && sendStopwatch.isRunning()) {
 					sendStopwatch.stop();
+					playSound("completed.wav");
 				}
 			});
+		});
+		
+		serialGrbl.setErrorCallback(() -> {
+			if (sendStopwatch.isRunning()) {
+				sendStopwatch.stop();
+				playSound("error.wav");
+			}
 		});
 		
 		Timer sendTimeUpdater = new Timer(1000, event -> {
@@ -374,9 +387,6 @@ public class MachinePanel extends JPanel {
 		
 		Timer remainingUpdater = new Timer(100, event -> {
 			setRemaining(serialGrbl.getBufferSize());
-			if (serialGrbl.isPaused() && sendStopwatch.isRunning()) {
-				sendStopwatch.stop();
-			}
 		});
 		remainingUpdater.setRepeats(true);
 		remainingUpdater.start();
@@ -450,5 +460,18 @@ public class MachinePanel extends JPanel {
 				.setProbeX(probeX.getValue().get())
 				.setProbeY(probeY.getValue().get())
 				.build();
+	}
+	
+	private static void playSound(String filename) {
+		try {
+			AudioInputStream audioStream = AudioSystem.getAudioInputStream(new File(filename).getAbsoluteFile());
+			Clip clip = AudioSystem.getClip();
+			clip.open(audioStream);
+			clip.start();
+		} catch (UnsupportedAudioFileException | IOException | LineUnavailableException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
 	}
 }

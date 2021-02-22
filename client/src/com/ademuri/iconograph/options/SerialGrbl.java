@@ -27,6 +27,7 @@ public class SerialGrbl {
 	private SerialPort serialPort = null;
 	private Consumer<String> receivedCallback = null;
 	private Consumer<String> sentCallback = null;
+	private Runnable errorCallback = null;
 	
 	//public SerialGrbl(
 	
@@ -66,6 +67,9 @@ public class SerialGrbl {
 				} else {
 					System.err.format("Got non-ok response from GRBL: %s\n", s);
 					writeState = WriteState.PAUSE;
+					if (errorCallback != null) {
+						errorCallback.run();
+					}
 				}
 			}
 
@@ -145,7 +149,7 @@ public class SerialGrbl {
 		}
 		
 		int receiveBufferUsed = awaitingOkBuffer.stream().mapToInt(line -> line.length()).sum();
-		while (true) {
+		while (!writeBuffer.isEmpty()) {
 			String toSend = writeBuffer.peek() + "\n";
 			if (receiveBufferUsed + toSend.length() > RECEIVE_BUFFER_SIZE) {
 				break;
@@ -200,5 +204,9 @@ public class SerialGrbl {
 	
 	public void setSentCallback(Consumer<String> callback) {
 		this.sentCallback = callback;
+	}
+	
+	public void setErrorCallback(Runnable callback) {
+		this.errorCallback = callback;
 	}
 }
