@@ -6,7 +6,9 @@ $fn = 50;
 
 width = 100;
 height = 100;
-finger_width = 0.75;
+
+// See https://iopscience.iop.org/article/10.1088/0022-3727/49/41/415304/meta
+finger_width = 1.9;
 finger_fillet = 0.3;
 gap_width = 1.0;
 
@@ -32,8 +34,8 @@ module board() {
                     translate([finger_width + gap_width, finger_width]) {
                         square([gap_width, height - (finger_width + gap_width)]);
                     }
-                    translate([finger_width + gap_width, height - finger_width - gap_width]) {
-                        square([finger_width + gap_width * 2, finger_width]);
+                    translate([finger_width + gap_width, height - gap_width]) {
+                        square([finger_width + gap_width * 2, gap_width]);
                     }
                 }
             }
