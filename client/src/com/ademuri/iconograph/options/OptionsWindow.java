@@ -443,16 +443,19 @@ public class OptionsWindow extends JFrame implements KeyListener {
 	private void setPathSegment() {
 		canvasViewer.setPathSegment(Double.parseDouble(pathSegment.getInput().getText()));
 	}
-
-	private void doGenerateGcode() {
-		canvasViewer.setMachineConfig(machinePanel.getMachineConfig());
-		GcodeConfig config = GcodeConfig.builder().setDrawSpeed(Double.parseDouble(drawSpeed.getInput().getText()))
+	
+	public GcodeConfig getGcodeConfig() {
+		return GcodeConfig.builder().setDrawSpeed(Double.parseDouble(drawSpeed.getInput().getText()))
 				.setTravelSpeed(Double.parseDouble(travelSpeed.getInput().getText()))
 				.setAcceleration(Double.parseDouble(acceleration.getInput().getText()))
 				.setPenDown(Double.parseDouble(penDown.getInput().getText()))
 				.setPenUp(Double.parseDouble(penUp.getInput().getText()))
 				.setPenSpeed(Double.parseDouble(penSpeed.getInput().getText())).build();
-		canvasViewer.generateGcode(config);
+	}
+
+	private void doGenerateGcode() {
+		canvasViewer.setMachineConfig(machinePanel.getMachineConfig());
+		canvasViewer.generateGcode(getGcodeConfig());
 	}
 
 	private void setLocationRight() {

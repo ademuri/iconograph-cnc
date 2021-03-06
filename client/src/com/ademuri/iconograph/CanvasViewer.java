@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -32,6 +33,10 @@ import org.w3c.dom.svg.SVGLength;
 import org.w3c.dom.svg.SVGPoint;
 import org.w3c.dom.svg.SVGPointList;
 
+import com.ademuri.iconograph.gcode.CarriageMove;
+import com.ademuri.iconograph.gcode.Dwell;
+import com.ademuri.iconograph.gcode.GcodeCommand;
+import com.ademuri.iconograph.gcode.PenMove;
 import com.ademuri.iconograph.options.MachineConfig;
 import com.ademuri.iconograph.options.OptionsWindow;
 
@@ -550,13 +555,13 @@ public class CanvasViewer extends PApplet {
 		return scaleY;
 	}
 
-	private static String penDownGcode(GcodeConfig config) {
-		return String.format("G04 P0.1 ; Delay for 0.1s\nG01 F%.1f Z%.3f ; Pen down\n", config.penSpeed(),
-				config.penDown());
+	private static List<GcodeCommand> penDownGcode(GcodeConfig config) {
+		return List.<GcodeCommand>of(Dwell.create(0.1),
+				PenMove.create(config.penSpeed(), config.penDown(), "Pen down"));
 	}
 
-	private static String penUpGcode(GcodeConfig config) {
-		return String.format("G01 F%.1f Z%.3f ; Pen up\n", config.penSpeed(), config.penUp());
+	private static PenMove penUpGcode(GcodeConfig config) {
+		return PenMove.create(config.penSpeed(), config.penUp(), "Pen up");
 	}
 	
 	public String topLeftGcode() {
@@ -601,94 +606,100 @@ public class CanvasViewer extends PApplet {
 		}
 	}
 	
-	private void generateGcodeForColor(GcodeConfig config, List<List<Point>> lines, Color color, int index) {
-		try {
-			BufferedWriter writer = Files.newBufferedWriter(Path.of(String.format("out_%d.gcode", index)));
-			writer.append(String.format("; For color %s\n", color));
-			writer.append("G90 ; Absolute positioning\n");
-			writer.append(String.format("; X-Axis acceleration\n$120=%.2f\n", config.acceleration()));
-			writer.append(String.format("; Y-Axis acceleration\n$121=%.2f\n", config.acceleration()));
-			writer.append("\n");
-			
-			/*
-			writer.append("G92 Z0 ; Reset Z to 0\n");
-			writer.append("G01 Z5 F400 ; Raise Z\n\n");
-			writer.append(String.format("G01 X%.2f Y%.2f F%.2f\n ; Go to probe location\n", machine.probeX(), machine.probeY(), config.travelSpeed()));
-			writer.append("G04 P0.5 ; Delay for 0.5s\n");
-			writer.append("G38.2 F200 Z-20; Probe toward canvas, stop on 'contact', error on failure\n");
-			writer.append("G92 Z1.3 ; Reset Z to sensor height\n");
-			//writer.append("G01 Z8 F400 ; Raise Z\n\n");
-			 */
-			writer.append("G01 Z5 F400 ; Raise Z\n\n");
+	private List<GcodeCommand> generateGcodeForColor(GcodeConfig config, List<List<Point>> lines, Color color, int index) {
+		ArrayList<GcodeCommand> gcode = new ArrayList<>();
+		gcode.add(new GcodeCommand(String.format("; For color %s\n", color)));
+		gcode.add(new GcodeCommand("G90 ; Absolute positioning\n"));
+		gcode.add(new GcodeCommand(String.format("; X-Axis acceleration\n$120=%.2f\n", config.acceleration())));
+		gcode.add(new GcodeCommand(String.format("; Y-Axis acceleration\n$121=%.2f\n", config.acceleration())));
+		gcode.add(new GcodeCommand(""));
+		
+		/*
+		writer.append("G92 Z0 ; Reset Z to 0\n");
+		writer.append("G01 Z5 F400 ; Raise Z\n\n");
+		writer.append(String.format("G01 X%.2f Y%.2f F%.2f\n ; Go to probe location\n", machine.probeX(), machine.probeY(), config.travelSpeed()));
+		writer.append("G04 P0.5 ; Delay for 0.5s\n");
+		writer.append("G38.2 F200 Z-20; Probe toward canvas, stop on 'contact', error on failure\n");
+		writer.append("G92 Z1.3 ; Reset Z to sensor height\n");
+		//writer.append("G01 Z8 F400 ; Raise Z\n\n");
+		 */
+		gcode.add(PenMove.create(config.drawSpeed(), 5));
 
-			boolean penDown = false;
+		boolean penDown = false;
 
-			// TODO: re-add prime line, maybe outside of draw area? 
+		// TODO: re-add prime line, maybe outside of draw area? 
 
-			for (int i = 0; i < lines.size(); i++) {
-				writer.append("\n");
-				List<Point> points = lines.get(i);
-				writer.append(String.format("; Line %d\n", i - 1));
-				for (int j = 0; j < points.size(); j++) {
-					Point machinePoint = points.get(j).translate(machine.canvasOffsetX(), machine.canvasOffsetY()).translate(offsetX, offsetY);
-					if (machinePoint.x > machine.canvasRightX() || machinePoint.x < machine.canvasOffsetX()) {
-						System.err.format("Point X out of bounds: %s, X: %f -> %f, canvas point: %s\n", machinePoint,
-								machine.canvasOffsetX(), machine.canvasRightX(), points.get(j));
-						if (penDown) {
-							writer.append(penUpGcode(config));
-							penDown = false;
-						}
-					} else if (machinePoint.y > machine.canvasBottomY() || machinePoint.y < machine.canvasOffsetY()) {
-						System.err.format("Point Y out of bounds: %s,  Y: %f -> %f, canvas point: %s\n", machinePoint,
-								machine.canvasOffsetY(), machine.canvasBottomY(), points.get(j));
-						if (penDown) {
-							writer.append(penUpGcode(config));
-							penDown = false;
-						}
-					} else {
-						Point beltPoint = machineToBeltPoint(machinePoint);
-						if (!penDown) {
-							writer.append(String.format("G01 F%.0f X%.3f Y%.3f\n", config.travelSpeed(), beltPoint.x,
-									beltPoint.y));
-							writer.append(penDownGcode(config));
-							penDown = true;
-						} else {
-							writer.append(String.format("G01 F%.0f X%.3f Y%.3f\n", config.drawSpeed(), beltPoint.x,
-									beltPoint.y));
-						}
+		for (int i = 0; i < lines.size(); i++) {
+			gcode.add(new GcodeCommand(""));
+			List<Point> points = lines.get(i);
+			gcode.add(new GcodeCommand(String.format("; Line %d\n", i - 1)));
+			for (int j = 0; j < points.size(); j++) {
+				Point machinePoint = points.get(j).translate(machine.canvasOffsetX(), machine.canvasOffsetY()).translate(offsetX, offsetY);
+				if (machinePoint.x > machine.canvasRightX() || machinePoint.x < machine.canvasOffsetX()) {
+					System.err.format("Point X out of bounds: %s, X: %f -> %f, canvas point: %s\n", machinePoint,
+							machine.canvasOffsetX(), machine.canvasRightX(), points.get(j));
+					if (penDown) {
+						gcode.add(penUpGcode(config));
+						penDown = false;
 					}
-				}
-				if (i < lines.size() - 1) {
-					Point lastPoint = points.get(points.size() - 1);
-					Point nextPoint = lines.get(i + 1).get(0);
-					double samePointThreshold = lineWidth / 3;
-
-					if (Math.abs(nextPoint.x - lastPoint.x) < samePointThreshold
-							&& Math.abs(nextPoint.y - lastPoint.y) < samePointThreshold) {
-						// Keep pen down
-						penDown = true;
-					} else {
-						writer.append(penUpGcode(config));
+				} else if (machinePoint.y > machine.canvasBottomY() || machinePoint.y < machine.canvasOffsetY()) {
+					System.err.format("Point Y out of bounds: %s,  Y: %f -> %f, canvas point: %s\n", machinePoint,
+							machine.canvasOffsetY(), machine.canvasBottomY(), points.get(j));
+					if (penDown) {
+						gcode.add(penUpGcode(config));
 						penDown = false;
 					}
 				} else {
-					writer.append(penUpGcode(config));
-					penDown = false;
+					Point beltPoint = machineToBeltPoint(machinePoint);
+					if (!penDown) {
+						gcode.add(CarriageMove.create(config.travelSpeed(), beltPoint.x, beltPoint.y));
+						gcode.addAll(penDownGcode(config));
+						penDown = true;
+					} else {
+						gcode.add(CarriageMove.create(config.drawSpeed(), beltPoint.x, beltPoint.y));
+					}
 				}
 			}
+			if (i < lines.size() - 1) {
+				Point lastPoint = points.get(points.size() - 1);
+				Point nextPoint = lines.get(i + 1).get(0);
+				double samePointThreshold = lineWidth / 3;
 
-			writer.append("\n; Final position\n");
-			writer.append(penUpGcode(config));
-			Point finalPositionBelt = machineToBeltPoint(finalPosition);
-			writer.append(String.format("G01 F%f X%.3f Y%.3f\n\n", config.travelSpeed(), finalPositionBelt.x,
-					finalPositionBelt.y));
+				if (Math.abs(nextPoint.x - lastPoint.x) < samePointThreshold
+						&& Math.abs(nextPoint.y - lastPoint.y) < samePointThreshold) {
+					// Keep pen down
+					penDown = true;
+				} else {
+					gcode.add(penUpGcode(config));
+					penDown = false;
+				}
+			} else {
+				gcode.add(penUpGcode(config));
+				penDown = false;
+			}
+		}
 
-			writer.append("G04 P0.1 ; Wait for machine idle\n");
-			writer.append(String.format("; X-Axis acceleration\n$120=%.2f\n", DEFAULT_ACCELERATION));
-			writer.append(String.format("; Y-Axis acceleration\n$121=%.2f\n\n", DEFAULT_ACCELERATION));
+		gcode.add(new GcodeCommand(""));
+		gcode.add(new GcodeCommand("; Final position"));
+		gcode.add(penUpGcode(config));
+		Point finalPositionBelt = machineToBeltPoint(finalPosition);
+		gcode.add(CarriageMove.create(config.travelSpeed(), finalPositionBelt.x, finalPositionBelt.y));
+		gcode.add(new GcodeCommand(""));
+
+		gcode.add(new GcodeCommand("; Wait for machine idle"));
+		gcode.add(Dwell.create(0.1));
+		gcode.add(new GcodeCommand(String.format("; X-Axis acceleration\n$120=%.2f\n", DEFAULT_ACCELERATION)));
+		gcode.add(new GcodeCommand(String.format("; Y-Axis acceleration\n$121=%.2f\n\n", DEFAULT_ACCELERATION)));
+		try {
+			BufferedWriter writer = Files.newBufferedWriter(Path.of(String.format("out_%d.gcode", index)));
+			for (GcodeCommand command : gcode) {
+				writer.append(command.toString() + "\n");
+			}
 			writer.close();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+		
+		return gcode;
 	}
 }
