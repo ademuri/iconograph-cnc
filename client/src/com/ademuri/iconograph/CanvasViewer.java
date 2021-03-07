@@ -690,8 +690,13 @@ public class CanvasViewer extends PApplet {
 		gcode.add(Dwell.create(0.1));
 		gcode.add(new GcodeCommand(String.format("; X-Axis acceleration\n$120=%.2f\n", DEFAULT_ACCELERATION)));
 		gcode.add(new GcodeCommand(String.format("; Y-Axis acceleration\n$121=%.2f\n\n", DEFAULT_ACCELERATION)));
+		
+		Duration estimatedTime = estimateGcodeTime(gcode);
+		
 		try {
 			BufferedWriter writer = Files.newBufferedWriter(Path.of(String.format("out_%d.gcode", index)));
+			writer.append(String.format("; Estimated time: %d:%02d\n", estimatedTime.toHoursPart(), estimatedTime.toMinutesPart()));
+			System.out.println(estimatedTime.toString());
 			for (GcodeCommand command : gcode) {
 				writer.append(command.toString() + "\n");
 			}
@@ -701,5 +706,35 @@ public class CanvasViewer extends PApplet {
 		}
 		
 		return gcode;
+	}
+	
+	private static Duration estimateGcodeTime(List<GcodeCommand> gcode) {
+		Double x = null;
+		Double y = null;
+		Double z = null;
+		Duration time = Duration.ofSeconds(0);
+		
+		for (GcodeCommand command : gcode) {
+			if (command instanceof Dwell) {
+				time = time.plusSeconds((long) ((Dwell) command).seconds());
+			} else if (command instanceof PenMove) {
+				PenMove penMove = (PenMove) command;
+				if (z != null) {
+					double distance = Math.abs(z - penMove.z());
+					time = time.plusMillis((long) (distance / penMove.feedRate() * 60 * 1000));
+				}
+				z = penMove.z();
+			} else if (command instanceof CarriageMove) {
+				CarriageMove move = (CarriageMove) command;
+				if (x != null && y != null) {
+					double distance = Math.sqrt(Math.pow(x - move.x(), 2) + Math.pow(y - move.y(), 2));
+					time = time.plusMillis((long) (distance / move.feedRate() * 60 * 1000));
+				}
+				x = move.x();
+				y = move.y();
+			}
+		}
+		
+		return time;
 	}
 }
