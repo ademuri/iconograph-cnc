@@ -167,6 +167,8 @@ public class CanvasViewer extends PApplet {
 		SVGLength height = ((SVGOMSVGElement) svgRootElement).getHeight().getBaseVal();
 
 		double scale = 1;
+		width.convertToSpecifiedUnits(SVGLength.SVG_LENGTHTYPE_MM);
+		height.convertToSpecifiedUnits(SVGLength.SVG_LENGTHTYPE_MM);
 		double svgWidth = width.getValueInSpecifiedUnits();
 		double svgHeight = height.getValueInSpecifiedUnits();
 		if (machine.canvasWidth() > svgWidth) {
@@ -505,7 +507,11 @@ public class CanvasViewer extends PApplet {
 	}
 
 	public void setScale(String x, String y) {
-		setScale(parseDoubleOrDefault(x, scaleX), parseDoubleOrDefault(y, scaleY));
+		double newScaleX = parseDoubleOrDefault(x, scaleX);
+		double newScaleY = parseDoubleOrDefault(y, scaleY);
+		if (newScaleX != scaleX || newScaleY != scaleY) {
+			setScale(newScaleX, newScaleY);
+		}
 	}
 
 	public void setScale(double x, double y) {
